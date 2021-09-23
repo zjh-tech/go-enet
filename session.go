@@ -8,15 +8,16 @@ import (
 
 type Session struct {
 	ISessionOnHandler
-	conn                  IConnection
-	sessId                uint64
-	attach                interface{}
-	coder                 ICoder
-	sessType              SessionType
-	factory               ISessionFactory
-	evtQueue              IEventQueue
-	sessionConcurrentFlag bool
-	exitChan              chan struct{}
+	conn                      IConnection
+	sessId                    uint64
+	attach                    interface{}
+	coder                     ICoder
+	sessType                  SessionType
+	factory                   ISessionFactory
+	evtQueue                  IEventQueue
+	sessionConcurrentFlag     bool
+	exitSessionConcurrentChan chan struct{}
+	exitReconnectChan         chan struct{}
 }
 
 func (s *Session) SetSessionConcurrentFlag(flag bool) {
@@ -100,7 +101,7 @@ func (s *Session) GetSessionFactory() ISessionFactory {
 
 func (s *Session) StartSessionConcurrentGoroutine() {
 	connID := s.conn.GetConnID()
-	s.exitChan = make(chan struct{})
+	s.exitSessionConcurrentChan = make(chan struct{})
 	ELog.InfoAf("[Net][Session] SessID=%v ConnID=%v ProcessMsg Goroutine Start", s.sessId, connID)
 
 	go func() {
@@ -118,7 +119,7 @@ func (s *Session) StartSessionConcurrentGoroutine() {
 				}
 				tcpEvt := evt.(*TcpEvent)
 				tcpEvt.ProcessMsg()
-			case <-s.exitChan:
+			case <-s.exitSessionConcurrentChan:
 				return
 			}
 		}
@@ -126,7 +127,7 @@ func (s *Session) StartSessionConcurrentGoroutine() {
 }
 
 func (s *Session) StopSessionConcurrentGoroutine() {
-	s.exitChan <- struct{}{}
+	s.exitSessionConcurrentChan <- struct{}{}
 }
 
 func (s *Session) Terminate() {

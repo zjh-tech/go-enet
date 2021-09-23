@@ -165,7 +165,6 @@ func (c *CSSessionMgr) CreateSession(isListenFlag bool) ISession {
 	sess.SetSessID(c.nextId)
 	sess.SetCoder(c.coder)
 	sess.SetSessionFactory(c)
-
 	ELog.InfoAf("[CSSessionMgr] CreateSession SessID=%v", sess.GetSessID())
 	c.nextId++
 	return sess
@@ -206,7 +205,7 @@ func (c *CSSessionMgr) SendProtoMsgBySessionID(sessionID uint64, msgId uint32, m
 	}
 }
 
-func (c *CSSessionMgr) Connect(addr string, handler ICSMsgHandler, coder ICoder, sessionConcurrentFlag bool) uint64 {
+func (c *CSSessionMgr) Connect(addr string, handler ICSMsgHandler, coder ICoder, sessionConcurrentFlag bool, attach interface{}) ISession {
 	if coder == nil {
 		coder = NewCoder()
 	}
@@ -214,6 +213,7 @@ func (c *CSSessionMgr) Connect(addr string, handler ICSMsgHandler, coder ICoder,
 	c.coder = coder
 	c.handler = handler
 	sess := c.CreateSession(false)
+	sess.SetAttach(attach)
 	if sessionConcurrentFlag {
 		sess.SetSessionConcurrentFlag(true)
 	}
@@ -226,7 +226,7 @@ func (c *CSSessionMgr) Connect(addr string, handler ICSMsgHandler, coder ICoder,
 	c.cacheMap[sess.GetSessID()] = cache
 	ELog.InfoAf("[CSSessionMgr]ConnectCache Add SessionID=%v,Addr=%v", sess.GetSessID(), addr)
 	GNet.Connect(addr, sess)
-	return sess.GetSessID()
+	return sess
 }
 
 func (c *CSSessionMgr) Listen(addr string, handler ICSMsgHandler, coder ICoder, listenMaxCount int, sessionConcurrentFlag bool) bool {

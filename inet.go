@@ -104,6 +104,10 @@ type ISession interface {
 	Terminate()
 
 	Update()
+
+	GetAttach() interface{}
+
+	SetAttach(attach interface{})
 }
 
 //ISessionFactory
