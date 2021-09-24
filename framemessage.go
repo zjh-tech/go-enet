@@ -15,7 +15,7 @@ type S2SSessionVerifyReq struct {
 	ServerId      uint64
 	ServerType    uint32
 	ServerTypeStr string
-	Ip            string
+	Addr          string
 	Token         string
 }
 

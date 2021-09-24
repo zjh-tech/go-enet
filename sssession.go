@@ -24,7 +24,7 @@ type VerifySessionSpec struct {
 	ServerID      uint64
 	ServerType    uint32
 	ServerTypeStr string
-	Ip            string
+	Addr          string
 	Token         string
 }
 
@@ -32,7 +32,7 @@ type RemoteSessionSpec struct {
 	ServerID      uint64
 	ServerType    uint32
 	ServerTypeStr string
-	Ip            string
+	Addr          string
 }
 
 type SSSession struct {
@@ -91,12 +91,12 @@ func (s *SSSession) OnEstablish() {
 	s.factory.AddSession(s)
 	s.sessState = SessVerifyState
 	if s.IsConnectType() {
-		ELog.InfoAf("[SSSession] Remote [ID=%v,Type=%v,Ip=%v] Establish Send Verify Req", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Ip)
+		ELog.InfoAf("[SSSession] Remote [ID=%v,Type=%v,Addr=%v] Establish Send Verify Req", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
 		req := &S2SSessionVerifyReq{
 			ServerId:      s.verifySpec.ServerID,
 			ServerType:    s.verifySpec.ServerType,
 			ServerTypeStr: s.verifySpec.ServerTypeStr,
-			Ip:            s.verifySpec.Ip,
+			Addr:          s.verifySpec.Addr,
 			Token:         s.verifySpec.Token,
 		}
 
@@ -110,7 +110,7 @@ func (s *SSSession) OnEstablish() {
 
 func (s *SSSession) OnVerify() {
 	s.sessState = SessEstablishState
-	ELog.InfoAf("[SSSession] Remote [ID=%v,Type=%v,Ip=%v] Verify Ok", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Ip)
+	ELog.InfoAf("[SSSession] Remote [ID=%v,Type=%v,Ip=%v] Verify Ok", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
 
 	factory := s.GetSessionFactory()
 	ssserverfactory := factory.(*SSSessionMgr)
@@ -122,7 +122,7 @@ func (s *SSSession) OnVerify() {
 func (s *SSSession) Update() {
 	now := getMillsecond()
 	if (s.lastCheckBeatHeartTime + SSBeatHeartMaxTime) < now {
-		ELog.ErrorAf("[SSSession] Remote [ID=%v,Type=%v,Ip=%v] BeatHeart Exception", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Ip)
+		ELog.ErrorAf("[SSSession] Remote [ID=%v,Type=%v,Addr=%v] BeatHeart Exception", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
 		s.Terminate()
 		return
 	}
@@ -131,7 +131,7 @@ func (s *SSSession) Update() {
 		if (s.lastSendBeatHeartTime + SSBeatSendHeartTime) >= now {
 			s.lastSendBeatHeartTime = now
 			s.SendMsg(S2SSessionPingId, nil)
-			ELog.DebugAf("[SSSession] Remote [ID=%v,Type=%v,Ip=%v] Send Ping", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Ip)
+			ELog.DebugAf("[SSSession] Remote [ID=%v,Type=%v,Addr=%v] Send Ping", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
 		}
 	}
 }
@@ -140,7 +140,7 @@ func (s *SSSession) OnTerminate() {
 	if s.remoteSpec.ServerID == 0 {
 		ELog.InfoAf("[SSSession] SessID=%v  Terminate", s.sessId)
 	} else {
-		ELog.InfoAf("[SSSession] SessID=%v [ID=%v,Type=%v,Ip=%v] Terminate", s.sessId, s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Ip)
+		ELog.InfoAf("[SSSession] SessID=%v [ID=%v,Type=%v,Addr=%v] Terminate", s.sessId, s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
 	}
 	factory := s.GetSessionFactory()
 	ssserverfactory := factory.(*SSSessionMgr)
@@ -181,36 +181,36 @@ func (s *SSSession) OnHandler(msgId uint32, datas []byte) {
 		remoteSpec.ServerID = verifyReq.ServerId
 		remoteSpec.ServerType = verifyReq.ServerType
 		remoteSpec.ServerTypeStr = verifyReq.ServerTypeStr
-		remoteSpec.Ip = verifyReq.Ip
+		remoteSpec.Addr = verifyReq.Addr
 		s.SetRemoteSpec(remoteSpec)
 
 		if verifyReq.Token != s.localToken {
-			ELog.ErrorAf("[SSSession] Remote [ID=%v,Type=%v,Ip=%v] Recv Verify Error", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Ip)
+			ELog.ErrorAf("[SSSession] Remote [ID=%v,Type=%v,Addr=%v] Recv Verify Error", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
 			VerifyResFunc(MsgFail)
 			return
 		}
 
-		ELog.InfoAf("[SSSession] Remote [ID=%v,Type=%v,Ip=%v] Recv Verify Ok", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Ip)
+		ELog.InfoAf("[SSSession] Remote [ID=%v,Type=%v,Addr=%v] Recv Verify Ok", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
 		s.OnVerify()
 		VerifyResFunc(MsgSuccess)
 		return
 	}
 
 	if msgId == S2SSessionVerifyResId && s.IsConnectType() {
-		ELog.InfoAf("[SSSession] Remote [ID=%v,Type=%v,Ip=%v] Recv Verify Ack Ok", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Ip)
+		ELog.InfoAf("[SSSession] Remote [ID=%v,Type=%v,Addr=%v] Recv Verify Ack Ok", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
 		s.OnVerify()
 		return
 	}
 
 	if msgId == S2SSessionPingId && s.IsListenType() {
-		ELog.DebugAf("[SSSession] Remote [ID=%v,Type=%v,Ip=%v] Recv Ping Send Pong", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Ip)
+		ELog.DebugAf("[SSSession] Remote [ID=%v,Type=%v,Addr=%v] Recv Ping Send Pong", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
 		s.lastCheckBeatHeartTime = getMillsecond()
 		s.SendMsg(S2SSessionPongId, nil)
 		return
 	}
 
 	if msgId == S2SSessionPongId && s.IsConnectType() {
-		ELog.DebugAf("[SSSession] Remote [ID=%v,Type=%v,Ip=%v] Recv Pong", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Ip)
+		ELog.DebugAf("[SSSession] Remote [ID=%v,Type=%v,Addr=%v] Recv Pong", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
 		s.lastCheckBeatHeartTime = getMillsecond()
 		return
 	}
@@ -345,7 +345,7 @@ func (s *SSSessionMgr) RemoveSession(id uint64) {
 		if sess.remoteSpec.ServerID == 0 {
 			ELog.InfoAf("[SSSessionMgr] Remove SessID=%v UnInit SSSession", sess.GetSessID())
 		} else {
-			ELog.InfoAf("[SSSessionMgr] Remove SessID=%v [ID=%v,Type=%v,Ip=%v] SSSession", sess.GetSessID(), sess.remoteSpec.ServerID, sess.remoteSpec.ServerType, sess.remoteSpec.Ip)
+			ELog.InfoAf("[SSSessionMgr] Remove SessID=%v [ID=%v,Type=%v,Addr=%v] SSSession", sess.GetSessID(), sess.remoteSpec.ServerID, sess.remoteSpec.ServerType, sess.remoteSpec.Addr)
 		}
 		delete(s.sessMap, id)
 	}
@@ -439,6 +439,7 @@ func (s *SSSessionMgr) GetSessionIdByHashIdAndSrvType(hashId uint64, serverType 
 func (s *SSSessionMgr) SSServerConnect(verifySpec VerifySessionSpec, remoteSepc RemoteSessionSpec) {
 	session := s.CreateSession(false)
 	if session != nil {
+		session.SetRemoteAddr(remoteSepc.Addr)
 		cache := &SSSessionCache{
 			ServerID:      remoteSepc.ServerID,
 			ServerType:    remoteSepc.ServerType,
@@ -451,7 +452,7 @@ func (s *SSSessionMgr) SSServerConnect(verifySpec VerifySessionSpec, remoteSepc 
 		serverSession := session.(*SSSession)
 		serverSession.SetVerifySpec(verifySpec)
 		serverSession.SetRemoteSpec(remoteSepc)
-		GNet.Connect(remoteSepc.Ip, serverSession)
+		GNet.Connect(remoteSepc.Addr, serverSession)
 	}
 }
 

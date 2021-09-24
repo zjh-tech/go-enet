@@ -108,6 +108,14 @@ type ISession interface {
 	GetAttach() interface{}
 
 	SetAttach(attach interface{})
+
+	SetLocalAddr(addr string)
+
+	GetLocalAddr() string
+
+	SetRemoteAddr(addr string)
+
+	GetRemoteAddr() string
 }
 
 //ISessionFactory

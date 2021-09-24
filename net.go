@@ -90,6 +90,9 @@ func (n *Net) Listen(addr string, factory ISessionFactory, listenMaxCount int, s
 				continue
 			}
 
+			session.SetLocalAddr(netConn.LocalAddr().String())
+			session.SetRemoteAddr(netConn.RemoteAddr().String())
+
 			if sessionConcurrentFlag {
 				session.SetSessionConcurrentFlag(true)
 			}
@@ -138,6 +141,7 @@ func (n *Net) doConnectGoroutine() {
 				continue
 			}
 
+			evt.sess.SetLocalAddr(netConn.LocalAddr().String())
 			conn := GConnectionMgr.Create(n, netConn, evt.sess)
 			go conn.Start()
 		default:

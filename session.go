@@ -17,7 +17,8 @@ type Session struct {
 	evtQueue                  IEventQueue
 	sessionConcurrentFlag     bool
 	exitSessionConcurrentChan chan struct{}
-	exitReconnectChan         chan struct{}
+	localAddr                 string
+	remoteAddr                string
 }
 
 func (s *Session) SetSessionConcurrentFlag(flag bool) {
@@ -61,6 +62,22 @@ func (s *Session) GetCoder() ICoder {
 
 func (s *Session) SetCoder(coder ICoder) {
 	s.coder = coder
+}
+
+func (s *Session) SetLocalAddr(addr string) {
+	s.localAddr = addr
+}
+
+func (s *Session) GetLocalAddr() string {
+	return s.localAddr
+}
+
+func (s *Session) SetRemoteAddr(addr string) {
+	s.remoteAddr = addr
+}
+
+func (s *Session) GetRemoteAddr() string {
+	return s.remoteAddr
 }
 
 func (s *Session) GetSessionOnHandler() ISessionOnHandler {
