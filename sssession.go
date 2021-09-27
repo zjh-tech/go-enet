@@ -251,7 +251,7 @@ func (s *SSSessionMgr) Init(token string) {
 
 func (s *SSSessionMgr) Update() {
 	now := getMillsecond()
-	if (s.lastUpdateTime + SSMgrOutputTime) >= now {
+	if (s.lastUpdateTime + SSMgrOutputTime) <= now {
 		s.lastUpdateTime = now
 
 		for _, session := range s.sessMap {

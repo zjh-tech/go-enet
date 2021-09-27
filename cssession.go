@@ -141,7 +141,7 @@ func (c *CSSessionMgr) IsExistSessionOfSessID(sessionId uint64) bool {
 
 func (c *CSSessionMgr) Update() {
 	now := getMillsecond()
-	if (c.lastUpdateTime + CsMgrUpdateTime) >= now {
+	if (c.lastUpdateTime + CsMgrUpdateTime) <= now {
 		c.lastUpdateTime = now
 
 		for sessionID, cache := range c.cacheMap {

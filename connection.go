@@ -127,9 +127,10 @@ func (c *Connection) readerGoroutine() {
 }
 
 func (c *Connection) Start() {
+	c.session.SetConnection(c)
+
 	establishEvent := NewTcpEvent(ConnEstablishType, c, nil)
 	if c.session.GetSessionConcurrentFlag() {
-		c.session.SetConnection(c)
 		c.session.StartSessionConcurrentGoroutine()
 		c.session.PushEvent(establishEvent)
 	} else {

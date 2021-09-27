@@ -98,7 +98,6 @@ func (n *Net) Listen(addr string, factory ISessionFactory, listenMaxCount int, s
 			}
 
 			conn := GConnectionMgr.Create(n, netConn, session)
-			session.SetConnection(conn)
 			go conn.Start()
 		}
 	}(n, factory, listen, listenMaxCount, sessionConcurrentFlag)
