@@ -4,8 +4,9 @@ import (
 	"bufio"
 	"io"
 	"net"
-	"sync/atomic"
 	"time"
+
+	"go.uber.org/atomic"
 )
 
 type Connection struct {
@@ -15,7 +16,7 @@ type Connection struct {
 	msgBuffChan chan []byte
 	exitChan    chan struct{}
 	session     ISession
-	state       uint32
+	state       atomic.Uint32
 }
 
 func NewConnection(connId uint64, net INet, conn *net.TCPConn, sess ISession) *Connection {
@@ -27,7 +28,7 @@ func NewConnection(connId uint64, net INet, conn *net.TCPConn, sess ISession) *C
 		session:     sess,
 		msgBuffChan: make(chan []byte, ConnectChannelMaxSize),
 		exitChan:    make(chan struct{}),
-		state:       ConnEstablishState,
+		state:       *atomic.NewUint32(ConnEstablishState),
 	}
 }
 
@@ -62,7 +63,7 @@ func (c *Connection) writerGoroutine() {
 				ELog.Errorf("[Net][Connection] ConnID=%v bufio Write Goroutine Exit Error=%v", c.connId, err)
 				return
 			}
-			atomic.AddInt64(&GSendQps, 1)
+			GSendQps.Add(1)
 		case <-c.exitChan:
 			{
 				ELog.Errorf("[Net][Connection] ConnID=%v Write Goroutine Exit", c.connId)
@@ -81,7 +82,7 @@ func (c *Connection) readerGoroutine() {
 	}()
 
 	for {
-		if atomic.LoadUint32(&c.state) != ConnEstablishState {
+		if c.state.Load() != ConnEstablishState {
 			return
 		}
 
@@ -122,7 +123,7 @@ func (c *Connection) readerGoroutine() {
 			c.net.PushEvent(msgEvent)
 		}
 
-		atomic.AddInt64(&GRecvQps, 1)
+		GRecvQps.Add(1)
 	}
 }
 
@@ -146,7 +147,7 @@ func (c *Connection) Terminate() {
 }
 
 func (c *Connection) close(terminate bool) {
-	if !atomic.CompareAndSwapUint32(&c.state, ConnEstablishState, ConnClosedState) {
+	if !c.state.CAS(ConnEstablishState, ConnClosedState) {
 		return
 	}
 
@@ -201,7 +202,7 @@ func (c *Connection) onClose() {
 }
 
 func (c *Connection) AsyncSend(datas []byte) {
-	if atomic.LoadUint32(&c.state) != ConnEstablishState {
+	if c.state.Load() != ConnEstablishState {
 		ELog.Warnf("[Net][Connection] ConnID=%v Send Error", c.connId)
 		return
 	}

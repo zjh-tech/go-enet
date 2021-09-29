@@ -3,6 +3,8 @@ package enet
 import (
 	"fmt"
 	"time"
+
+	"go.uber.org/atomic"
 )
 
 const (
@@ -18,8 +20,8 @@ const (
 	SessListenType
 )
 
-var GSendQps int64 = 0
-var GRecvQps int64 = 0
+var GSendQps atomic.Int64 = *atomic.NewInt64(0)
+var GRecvQps atomic.Int64 = *atomic.NewInt64(0)
 
 const (
 	ConnEstablishState uint32 = iota
