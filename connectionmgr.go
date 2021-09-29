@@ -25,7 +25,7 @@ func (c *ConnectionMgr) Create(net INet, netConn *net.TCPConn, sess ISession) IC
 	c.nextId++
 	conn := NewConnection(c.nextId, net, netConn, sess)
 	c.conns[conn.GetConnID()] = conn
-	ELog.InfoAf("[Net][ConnectionMgr] Add ConnID=%v Connection", conn.connId)
+	ELog.Infof("[Net][ConnectionMgr] Add ConnID=%v Connection", conn.connId)
 	return conn
 }
 
@@ -34,7 +34,7 @@ func (c *ConnectionMgr) Remove(id uint64) {
 	defer c.connLocker.Unlock()
 
 	delete(c.conns, id)
-	ELog.InfoAf("[Net][ConnectionMgr] Remove ConnID=%v Connection", id)
+	ELog.Infof("[Net][ConnectionMgr] Remove ConnID=%v Connection", id)
 }
 
 func (c *ConnectionMgr) GetConnCount() int {

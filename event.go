@@ -21,13 +21,13 @@ func (t *TcpEvent) GetConn() IConnection {
 
 func (t *TcpEvent) ProcessMsg() bool {
 	if t.conn == nil {
-		ELog.ErrorA("[Net] Run Conn Is Nil")
+		ELog.Error("[Net] Run Conn Is Nil")
 		return false
 	}
 
 	session := t.conn.GetSession()
 	if session == nil {
-		ELog.ErrorA("[Net] Run Session Is Nil")
+		ELog.Error("[Net] Run Session Is Nil")
 		return false
 	}
 
@@ -66,7 +66,7 @@ func NewHttpEvent(httpConn IHttpConnection, router string, cbFunc HttpCbFunc, da
 
 func (h *HttpEvent) ProcessMsg() bool {
 	if h.httpConn == nil {
-		ELog.ErrorA("[Net] ProcessMsg Run HttpConnection Is Nil")
+		ELog.Error("[Net] ProcessMsg Run HttpConnection Is Nil")
 		return false
 	}
 

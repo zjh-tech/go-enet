@@ -19,7 +19,7 @@ type Connection struct {
 }
 
 func NewConnection(connId uint64, net INet, conn *net.TCPConn, sess ISession) *Connection {
-	ELog.InfoAf("[Net][Connection] ConnID=%v Bind SessID=%v", connId, sess.GetSessID())
+	ELog.Infof("[Net][Connection] ConnID=%v Bind SessID=%v", connId, sess.GetSessID())
 	return &Connection{
 		connId:      connId,
 		net:         net,
@@ -36,7 +36,7 @@ func (c *Connection) GetConnID() uint64 {
 }
 
 func (c *Connection) writerGoroutine() {
-	ELog.InfoAf("[Net][Connection] ConnID=%v Write Goroutine Start", c.connId)
+	ELog.Infof("[Net][Connection] ConnID=%v Write Goroutine Start", c.connId)
 
 	defer c.close(false)
 	ioWriter := bufio.NewWriter(c.conn)
@@ -44,7 +44,7 @@ func (c *Connection) writerGoroutine() {
 	for {
 		if len(c.msgBuffChan) == 0 && ioWriter.Buffered() != 0 {
 			if err = ioWriter.Flush(); err != nil {
-				ELog.ErrorAf("[Net][Connection] ConnID=%v Write Goroutine Exit Flush Error=%v", c.connId, err)
+				ELog.Errorf("[Net][Connection] ConnID=%v Write Goroutine Exit Flush Error=%v", c.connId, err)
 				return
 			}
 		}
@@ -52,20 +52,20 @@ func (c *Connection) writerGoroutine() {
 		select {
 		case datas, ok := <-c.msgBuffChan:
 			if !ok {
-				ELog.ErrorAf("[Net][Connection] Write ConnID=%v MsgBuffChan Ok Error", c.connId)
+				ELog.Errorf("[Net][Connection] Write ConnID=%v MsgBuffChan Ok Error", c.connId)
 				return
 			}
 
-			ELog.DebugAf("[Net][Connection] Write ConnID=%v,Len=%v", c.connId, len(datas))
+			ELog.Debugf("[Net][Connection] Write ConnID=%v,Len=%v", c.connId, len(datas))
 
 			if _, err = ioWriter.Write(datas); err != nil {
-				ELog.ErrorAf("[Net][Connection] ConnID=%v bufio Write Goroutine Exit Error=%v", c.connId, err)
+				ELog.Errorf("[Net][Connection] ConnID=%v bufio Write Goroutine Exit Error=%v", c.connId, err)
 				return
 			}
 			atomic.AddInt64(&GSendQps, 1)
 		case <-c.exitChan:
 			{
-				ELog.ErrorAf("[Net][Connection] ConnID=%v Write Goroutine Exit", c.connId)
+				ELog.Errorf("[Net][Connection] ConnID=%v Write Goroutine Exit", c.connId)
 				return
 			}
 		}
@@ -73,10 +73,10 @@ func (c *Connection) writerGoroutine() {
 }
 
 func (c *Connection) readerGoroutine() {
-	ELog.InfoAf("[Net][Connection] ConnID=%v Read Goroutine Start", c.connId)
+	ELog.Infof("[Net][Connection] ConnID=%v Read Goroutine Start", c.connId)
 
 	defer func() {
-		ELog.InfoAf("[Net][Connection] ConnID=%v Read Goroutine Exit", c.connId)
+		ELog.Infof("[Net][Connection] ConnID=%v Read Goroutine Exit", c.connId)
 		c.close(false)
 	}()
 
@@ -89,28 +89,28 @@ func (c *Connection) readerGoroutine() {
 
 		headerLen := coder.GetHeaderLen()
 		headBytes := make([]byte, headerLen)
-		ELog.DebugAf("StartReader ConnID=%v HeaderLen=%v", c.connId, headerLen)
+		ELog.Debugf("StartReader ConnID=%v HeaderLen=%v", c.connId, headerLen)
 		if _, head_err := io.ReadFull(c.conn, headBytes); head_err != nil {
-			ELog.ErrorAf("[Net][Connection] ConnID=%v Read Goroutine Exit ReadFullError=%v", c.connId, head_err)
+			ELog.Errorf("[Net][Connection] ConnID=%v Read Goroutine Exit ReadFullError=%v", c.connId, head_err)
 			return
 		}
 
 		bodyLen, bodyLenErr := coder.GetBodyLen(headBytes)
 		if bodyLenErr != nil {
-			ELog.ErrorAf("[Net][Connection] ConnID=%v Read Goroutine Exit GetUnpackBodyLenError=%V", c.connId, bodyLenErr)
+			ELog.Errorf("[Net][Connection] ConnID=%v Read Goroutine Exit GetUnpackBodyLenError=%V", c.connId, bodyLenErr)
 			return
 		}
 
-		ELog.DebugAf("StartReader ConnID=%v BodyLen=%v", c.connId, bodyLen)
+		ELog.Debugf("StartReader ConnID=%v BodyLen=%v", c.connId, bodyLen)
 		bodyBytes := make([]byte, bodyLen)
 		if _, bodyErr := io.ReadFull(c.conn, bodyBytes); bodyErr != nil {
-			ELog.ErrorAf("[Net][Connection] ConnID=%v Read Goroutine Exit ReadBodyError=%v", c.connId, bodyErr)
+			ELog.Errorf("[Net][Connection] ConnID=%v Read Goroutine Exit ReadBodyError=%v", c.connId, bodyErr)
 			return
 		}
 
 		realBodyBytes, realBodyBytesErr := coder.UnpackMsg(bodyBytes)
 		if realBodyBytesErr != nil {
-			ELog.ErrorAf("[Net][Connection] ConnID=%v Read Goroutine Exit DecodeBodyError=%v", c.connId, realBodyBytesErr)
+			ELog.Errorf("[Net][Connection] ConnID=%v Read Goroutine Exit DecodeBodyError=%v", c.connId, realBodyBytesErr)
 			return
 		}
 
@@ -157,7 +157,7 @@ func (c *Connection) close(terminate bool) {
 
 	if terminate {
 		//主动断开
-		ELog.InfoAf("[Net][Connection] ConnID=%v Active Closed", c.connId)
+		ELog.Infof("[Net][Connection] ConnID=%v Active Closed", c.connId)
 		go func() {
 			//等待发完所有消息或者超时后,关闭底层read,write
 			closeTimer := time.NewTicker(100 * time.Millisecond)
@@ -184,7 +184,7 @@ func (c *Connection) close(terminate bool) {
 		}()
 	} else {
 		//被动断开
-		ELog.InfoAf("[Net][Connection] ConnID=%v Passive Closed", c.connId)
+		ELog.Infof("[Net][Connection] ConnID=%v Passive Closed", c.connId)
 		c.onClose()
 	}
 }
@@ -202,7 +202,7 @@ func (c *Connection) onClose() {
 
 func (c *Connection) AsyncSend(datas []byte) {
 	if atomic.LoadUint32(&c.state) != ConnEstablishState {
-		ELog.WarnAf("[Net][Connection] ConnID=%v Send Error", c.connId)
+		ELog.Warnf("[Net][Connection] ConnID=%v Send Error", c.connId)
 		return
 	}
 

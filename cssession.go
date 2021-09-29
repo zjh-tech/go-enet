@@ -44,11 +44,11 @@ func NewCSSession(handler ICSMsgHandler, isListenFlag bool) *CSSession {
 
 func (c *CSSession) SetOverload(intervalTime int64, limit int64) {
 	c.overloadModule = NewOverLoadModule(intervalTime, limit)
-	ELog.InfoAf("CSSession SessId=%v SetOverload IntervalTime=%v,Limit=%v", c.GetSessID(), intervalTime, limit)
+	ELog.Infof("CSSession SessId=%v SetOverload IntervalTime=%v,Limit=%v", c.GetSessID(), intervalTime, limit)
 }
 
 func (c *CSSession) OnEstablish() {
-	ELog.InfoAf("CSSession %v Establish", c.GetSessID())
+	ELog.Infof("CSSession %v Establish", c.GetSessID())
 	c.factory.AddSession(c)
 	c.handler.OnConnect(c)
 }
@@ -56,7 +56,7 @@ func (c *CSSession) OnEstablish() {
 func (c *CSSession) Update() {
 	now := getMillsecond()
 	if (c.lastCheckBeatHeartTime + C2SBeatHeartMaxTime) < now {
-		ELog.ErrorAf("CSSession %v  BeatHeart Exception", c.GetSessID())
+		ELog.Errorf("CSSession %v  BeatHeart Exception", c.GetSessID())
 		c.handler.OnBeatHeartError(c)
 		c.Terminate()
 		return
@@ -65,14 +65,14 @@ func (c *CSSession) Update() {
 	if c.IsConnectType() {
 		if (c.lastSendBeatHeartTime + C2SSendBeatHeartTime) >= now {
 			c.lastSendBeatHeartTime = now
-			ELog.DebugAf("[CSSession] SessID=%v Send Beat Heart", c.GetSessID())
+			ELog.Debugf("[CSSession] SessID=%v Send Beat Heart", c.GetSessID())
 			c.SendMsg(C2SSessionPingId, nil)
 		}
 	}
 }
 
 func (c *CSSession) OnTerminate() {
-	ELog.InfoAf("CSSession %v Terminate", c.GetSessID())
+	ELog.Infof("CSSession %v Terminate", c.GetSessID())
 	c.factory.RemoveSession(c.GetSessID())
 	c.handler.OnDisconnect(c)
 }
@@ -80,25 +80,25 @@ func (c *CSSession) OnTerminate() {
 func (c *CSSession) OnHandler(msgId uint32, datas []byte) {
 	//底层提供了心跳
 	if msgId == C2SSessionPingId {
-		ELog.DebugAf("[CSSession] SessionID=%v RECV PING SEND PONG", c.GetSessID())
+		ELog.Debugf("[CSSession] SessionID=%v RECV PING SEND PONG", c.GetSessID())
 		c.lastCheckBeatHeartTime = getMillsecond()
 		c.SendMsg(C2SSessionPongId, nil)
 		return
 	} else if msgId == C2SSessionPongId {
-		ELog.DebugAf("[CSSession] SessionID=%v RECV  PONG", c.GetSessID())
+		ELog.Debugf("[CSSession] SessionID=%v RECV  PONG", c.GetSessID())
 		c.lastCheckBeatHeartTime = getMillsecond()
 		return
 	}
 
 	//业务层也可以提供另外的心跳
-	ELog.DebugAf("CSSession OnHandler MsgID = %v", msgId)
+	ELog.Debugf("CSSession OnHandler MsgID = %v", msgId)
 	c.handler.OnHandler(msgId, datas, c)
 	c.lastCheckBeatHeartTime = getMillsecond()
 
 	if c.overloadModule != nil {
 		c.overloadModule.AddCount()
 		if c.overloadModule.IsOverLoad() {
-			ELog.ErrorAf("[CSSession] SessionID=%v OverLoad", c.GetSessID())
+			ELog.Errorf("[CSSession] SessionID=%v OverLoad", c.GetSessID())
 			c.Terminate()
 			return
 		}
@@ -146,7 +146,7 @@ func (c *CSSessionMgr) Update() {
 
 		for sessionID, cache := range c.cacheMap {
 			if cache.connectTick < now {
-				ELog.InfoAf("[CSSessionMgr] Timeout Triggle  ConnectCache Del SesssionID=%v,Addr=%v", cache.sessionId, cache.addr)
+				ELog.Infof("[CSSessionMgr] Timeout Triggle  ConnectCache Del SesssionID=%v,Addr=%v", cache.sessionId, cache.addr)
 				delete(c.cacheMap, sessionID)
 			}
 		}
@@ -165,7 +165,7 @@ func (c *CSSessionMgr) CreateSession(isListenFlag bool) ISession {
 	sess.SetSessID(c.nextId)
 	sess.SetCoder(c.coder)
 	sess.SetSessionFactory(c)
-	ELog.InfoAf("[CSSessionMgr] CreateSession SessID=%v", sess.GetSessID())
+	ELog.Infof("[CSSessionMgr] CreateSession SessID=%v", sess.GetSessID())
 	c.nextId++
 	return sess
 }
@@ -225,7 +225,7 @@ func (c *CSSessionMgr) Connect(addr string, handler ICSMsgHandler, coder ICoder,
 		connectTick: getMillsecond() + CsOnceConnectMaxTime,
 	}
 	c.cacheMap[sess.GetSessID()] = cache
-	ELog.InfoAf("[CSSessionMgr]ConnectCache Add SessionID=%v,Addr=%v", sess.GetSessID(), addr)
+	ELog.Infof("[CSSessionMgr]ConnectCache Add SessionID=%v,Addr=%v", sess.GetSessID(), addr)
 	GNet.Connect(addr, sess)
 	return sess.GetSessID()
 }

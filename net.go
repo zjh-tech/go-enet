@@ -72,20 +72,20 @@ func (n *Net) Listen(addr string, factory ISessionFactory, listenMaxCount int, s
 		for {
 			netConn, acceptErr := listen.AcceptTCP()
 			if acceptErr != nil {
-				ELog.ErrorAf("[Net] Accept Error=%v", acceptErr)
+				ELog.Errorf("[Net] Accept Error=%v", acceptErr)
 				continue
 			}
-			ELog.InfoAf("[Net] Accept Remote Addr %v", netConn.RemoteAddr().String())
+			ELog.Infof("[Net] Accept Remote Addr %v", netConn.RemoteAddr().String())
 
 			if sessfactory.GetSessionCount() >= listenMaxCount {
-				ELog.ErrorA("[Net] Conn is Full")
+				ELog.Error("[Net] Conn is Full")
 				netConn.Close()
 				continue
 			}
 
 			session := sessfactory.CreateSession(true)
 			if session == nil {
-				ELog.ErrorA("[Net] CreateSession Error")
+				ELog.Error("[Net] CreateSession Error")
 				netConn.Close()
 				continue
 			}
@@ -110,7 +110,7 @@ func (n *Net) Connect(addr string, sess ISession) {
 		addr: addr,
 		sess: sess,
 	}
-	ELog.InfoAf("[Net] Connect Addr=%v In ConnQueue", addr)
+	ELog.Infof("[Net] Connect Addr=%v In ConnQueue", addr)
 	n.connQueue <- connEvt
 
 	if atomic.CompareAndSwapUint32(&n.connState, IsFreeConnectState, IsConnectingState) {

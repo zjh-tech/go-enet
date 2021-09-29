@@ -119,11 +119,11 @@ func (s *Session) GetSessionFactory() ISessionFactory {
 func (s *Session) StartSessionConcurrentGoroutine() {
 	connID := s.conn.GetConnID()
 	s.exitSessionConcurrentChan = make(chan struct{})
-	ELog.InfoAf("[Net][Session] SessID=%v ConnID=%v ProcessMsg Goroutine Start", s.sessId, connID)
+	ELog.Infof("[Net][Session] SessID=%v ConnID=%v ProcessMsg Goroutine Start", s.sessId, connID)
 
 	go func() {
 		defer func() {
-			ELog.InfoAf("[Net][Session] SessID=%v ConnID=%v ProcessMsg Goroutine Exit", s.sessId, connID)
+			ELog.Infof("[Net][Session] SessID=%v ConnID=%v ProcessMsg Goroutine Exit", s.sessId, connID)
 			closeEvent := NewTcpEvent(ConnCloseType, s.conn, nil)
 			closeEvent.ProcessMsg()
 		}()
@@ -150,7 +150,7 @@ func (s *Session) StopSessionConcurrentGoroutine() {
 func (s *Session) Terminate() {
 	if s.conn != nil {
 		s.conn.Terminate()
-		ELog.InfoAf("[Session] Terminate SesssionID=%v", s.GetSessID())
+		ELog.Infof("[Session] Terminate SesssionID=%v", s.GetSessID())
 	}
 }
 
@@ -161,16 +161,16 @@ func (s *Session) SendMsg(msgId uint32, datas []byte) bool {
 
 	allDatas, err := s.coder.PackMsg(msgId, datas)
 	if err != nil {
-		ELog.ErrorAf("[Session] SesssionID=%v  SendMsg PackMsg Error=%v", s.GetSessID(), err)
+		ELog.Errorf("[Session] SesssionID=%v  SendMsg PackMsg Error=%v", s.GetSessID(), err)
 		return false
 	}
 
 	if len(allDatas) >= int(s.coder.GetPackageMaxLen()) {
-		ELog.ErrorAf("[Session] SesssionID=%v SendMsg MsgId=%v Out Range PackMsg Max Len", s.GetSessID(), msgId)
+		ELog.Errorf("[Session] SesssionID=%v SendMsg MsgId=%v Out Range PackMsg Max Len", s.GetSessID(), msgId)
 		return false
 	}
 
-	ELog.DebugAf("[Net][Session] SendMsg MsgId=%v,Datas=%v", msgId, datas)
+	ELog.Debugf("[Net][Session] SendMsg MsgId=%v,Datas=%v", msgId, datas)
 	s.conn.AsyncSend(allDatas)
 	return true
 }
@@ -182,11 +182,11 @@ func (s *Session) SendProtoMsg(msgId uint32, msg proto.Message) bool {
 
 	datas, err := proto.Marshal(msg)
 	if err != nil {
-		ELog.ErrorAf("[Net] Msg=%v Proto.Marshal Err %v ", msgId, err)
+		ELog.Errorf("[Net] Msg=%v Proto.Marshal Err %v ", msgId, err)
 		return false
 	}
 
-	ELog.DebugAf("[Net][Session] SendProtoMsg MsgId=%v,Protobuf=%v", msgId, msg)
+	ELog.Debugf("[Net][Session] SendProtoMsg MsgId=%v,Protobuf=%v", msgId, msg)
 	return s.SendMsg(msgId, datas)
 }
 
@@ -197,10 +197,10 @@ func (s *Session) SendJsonMsg(msgId uint32, js interface{}) bool {
 
 	datas, err := json.Marshal(js)
 	if err != nil {
-		ELog.ErrorAf("[Net] Msg=%v Json.Marshal Err %v ", msgId, err)
+		ELog.Errorf("[Net] Msg=%v Json.Marshal Err %v ", msgId, err)
 		return false
 	}
 
-	ELog.DebugAf("[Net][Session] SendJsonMsg MsgId=%v,Json=%v", msgId, js)
+	ELog.Debugf("[Net][Session] SendJsonMsg MsgId=%v,Json=%v", msgId, js)
 	return s.SendMsg(msgId, datas)
 }

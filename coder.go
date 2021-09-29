@@ -47,18 +47,18 @@ func (c *Coder) UnpackMsg(datas []byte) ([]byte, error) {
 //MsgID(uint32) +
 func (c *Coder) ProcessMsg(datas []byte, sess ISession) {
 	if len(datas) < PackageMsgIDLen {
-		ELog.ErrorAf("[Session] SesssionID=%v ProcessMsg Len Error", sess.GetSessID())
+		ELog.Errorf("[Session] SesssionID=%v ProcessMsg Len Error", sess.GetSessID())
 		return
 	}
 
 	buff := bytes.NewBuffer(datas)
 	msgId := uint32(0)
 	if err := binary.Read(buff, binary.BigEndian, &msgId); err != nil {
-		ELog.ErrorAf("[Session] SesssionID=%v ProcessMsg MsgID Error=%v", sess.GetSessID(), err)
+		ELog.Errorf("[Session] SesssionID=%v ProcessMsg MsgID Error=%v", sess.GetSessID(), err)
 		return
 	}
 
-	ELog.DebugAf("SessionID=%v,MsgID=%v", sess.GetSessID(), msgId)
+	ELog.Debugf("SessionID=%v,MsgID=%v", sess.GetSessID(), msgId)
 	sess.GetSessionOnHandler().OnHandler(msgId, datas[PackageMsgIDLen:])
 }
 
@@ -66,12 +66,12 @@ func (c *Coder) ProcessMsg(datas []byte, sess ISession) {
 func (c *Coder) PackMsg(msgId uint32, datas []byte) ([]byte, error) {
 	bodyBuff := bytes.NewBuffer([]byte{})
 	if err := binary.Write(bodyBuff, binary.BigEndian, msgId); err != nil {
-		ELog.ErrorAf("PackMsg MsgID Error=%v", err)
+		ELog.Errorf("PackMsg MsgID Error=%v", err)
 	}
 
 	if datas != nil {
 		if err := binary.Write(bodyBuff, binary.BigEndian, datas); err != nil {
-			ELog.ErrorAf("PackMsg Datas Error=%v", err)
+			ELog.Errorf("PackMsg Datas Error=%v", err)
 		}
 	}
 

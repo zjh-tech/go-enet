@@ -11,7 +11,7 @@ import (
 func PostJson(url string, js interface{}) (content []byte, err error) {
 	datas, marshalErr := json.Marshal(js)
 	if marshalErr != nil {
-		ELog.ErrorAf("PostJson json.Marshal Error %v", marshalErr)
+		ELog.Errorf("PostJson json.Marshal Error %v", marshalErr)
 		return nil, marshalErr
 	}
 
