@@ -1,6 +1,8 @@
 package enet
 
 import (
+	"math/rand"
+
 	"github.com/golang/protobuf/proto"
 )
 
@@ -202,6 +204,51 @@ func (c *CSSessionMgr) SendProtoMsgBySessionID(sessionID uint64, msgId uint32, m
 	serversess, ok := c.sessMap[sessionID]
 	if ok {
 		serversess.SendProtoMsg(msgId, msg)
+	}
+}
+
+func (c *CSSessionMgr) SendJsonMsgBySessionID(sessionID uint64, msgId uint32, js interface{}) {
+	serversess, ok := c.sessMap[sessionID]
+	if ok {
+		serversess.SendJsonMsg(msgId, js)
+	}
+}
+
+func (c *CSSessionMgr) SendProtoMsgByRandom(msgId uint32, msg proto.Message) {
+	totalLen := len(c.sessMap)
+	index := rand.Intn(totalLen)
+	i := 0
+	for _, sess := range c.sessMap {
+		if i == index {
+			sess.SendProtoMsg(msgId, msg)
+			return
+		}
+		i++
+	}
+}
+
+func (c *CSSessionMgr) SendJsonMsgByRandom(msgId uint32, js interface{}) {
+	totalLen := len(c.sessMap)
+	index := rand.Intn(totalLen)
+	i := 0
+	for _, sess := range c.sessMap {
+		if i == index {
+			sess.SendJsonMsg(msgId, js)
+			return
+		}
+		i++
+	}
+}
+
+func (c *CSSessionMgr) BroadcastProtoMsg(msgId uint32, msg proto.Message) {
+	for _, sess := range c.sessMap {
+		sess.SendProtoMsg(msgId, msg)
+	}
+}
+
+func (c *CSSessionMgr) BroadcastJsonMsg(msgId uint32, js interface{}) {
+	for _, sess := range c.sessMap {
+		sess.SendJsonMsg(msgId, js)
 	}
 }
 

@@ -101,6 +101,8 @@ type ISession interface {
 
 	SendProtoMsg(msgId uint32, msg proto.Message) bool
 
+	SendJsonMsg(msgId uint32, js interface{}) bool
+
 	Terminate()
 
 	Update()

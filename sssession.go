@@ -3,6 +3,7 @@ package enet
 import (
 	"encoding/json"
 	"math"
+	"math/rand"
 
 	"github.com/golang/protobuf/proto"
 )
@@ -286,7 +287,7 @@ func (s *SSSessionMgr) CreateSession(isListenFlag bool) ISession {
 	return sess
 }
 
-func (s *SSSessionMgr) FindLogicServerByServerType(serverType uint32) []ILogicServer {
+func (s *SSSessionMgr) findLogicServerByServerType(serverType uint32) []ILogicServer {
 	sessArray := make([]ILogicServer, 0)
 	for _, session := range s.sessMap {
 		serversess := session.(*SSSession)
@@ -394,16 +395,16 @@ func (s *SSSessionMgr) SendProtoMsgBySessionID(sessionID uint64, msgId uint32, m
 	return false
 }
 
-func (s *SSSessionMgr) BroadMsg(serverType uint32, msgId uint32, datas []byte) {
-	for _, session := range s.sessMap {
-		serversess := session.(*SSSession)
-		if serversess.GetRemoteServerType() == serverType {
-			serversess.SendMsg(msgId, datas)
-		}
+func (s *SSSessionMgr) SendJsonMsgBySessionID(sessionID uint64, msgId uint32, js interface{}) bool {
+	serversess, ok := s.sessMap[sessionID]
+	if ok {
+		return serversess.SendJsonMsg(msgId, js)
 	}
+
+	return false
 }
 
-func (s *SSSessionMgr) BroadProtoMsg(serverType uint32, msgId uint32, msg proto.Message) {
+func (s *SSSessionMgr) BroadcastProtoMsg(serverType uint32, msgId uint32, msg proto.Message) {
 	for _, session := range s.sessMap {
 		serversess := session.(*SSSession)
 		if serversess.GetRemoteServerType() == serverType {
@@ -412,48 +413,64 @@ func (s *SSSessionMgr) BroadProtoMsg(serverType uint32, msgId uint32, msg proto.
 	}
 }
 
-func (s *SSSessionMgr) GetSessionIdByHashIdAndSrvType(hashId uint64, serverType uint32) uint64 {
-	sessionId := uint64(0)
-
-	logicServerArray := s.FindLogicServerByServerType(serverType)
-	logicServerLen := uint64(len(logicServerArray))
-	if logicServerLen == 0 {
-		return sessionId
-	}
-
-	logicServerIndex := hashId % logicServerLen
-	for index, logicServer := range logicServerArray {
-		if uint64(index) == logicServerIndex {
-			sessionId = logicServer.GetServerSession().GetSessID()
-			break
+func (s *SSSessionMgr) BroadcastJsonMsg(serverType uint32, msgId uint32, js interface{}) {
+	for _, session := range s.sessMap {
+		serversess := session.(*SSSession)
+		if serversess.GetRemoteServerType() == serverType {
+			serversess.SendJsonMsg(msgId, js)
 		}
 	}
+}
 
-	if sessionId == 0 {
-		ELog.Errorf("[SSSessionMgr] GetSessionIdByHashId ServerType=%v,HashId=%v Error", serverType, hashId)
+func (s *SSSessionMgr) BroadcastMsg(serverType uint32, msgId uint32, datas []byte) {
+	for _, session := range s.sessMap {
+		serversess := session.(*SSSession)
+		if serversess.GetRemoteServerType() == serverType {
+			serversess.SendMsg(msgId, datas)
+		}
+	}
+}
+
+func (s *SSSessionMgr) SendProtoMsgByRandom(serverType uint32, msgId uint32, msg proto.Message) {
+	logicServerArray := s.findLogicServerByServerType(serverType)
+	logicServerLen := uint64(len(logicServerArray))
+	if logicServerLen == 0 {
+		ELog.Warnf("ServerType=%v,MsgId=%v,Msg=%v SendProtoMsgByRandom Len=0", serverType, msgId, msg)
+		return
 	}
 
-	return sessionId
+	logicServerIndex := rand.Intn(int(logicServerLen))
+	logicServerArray[logicServerIndex].GetServerSession().SendProtoMsg(msgId, msg)
+}
+
+func (s *SSSessionMgr) SendJsonMsgByRandom(serverType uint32, msgId uint32, js interface{}) {
+	logicServerArray := s.findLogicServerByServerType(serverType)
+	logicServerLen := uint64(len(logicServerArray))
+	if logicServerLen == 0 {
+		ELog.Warnf("ServerType=%v,MsgId=%v,Msg=%v SendJsonMsgByRandom Len=0", serverType, msgId, js)
+		return
+	}
+
+	logicServerIndex := rand.Intn(int(logicServerLen))
+	logicServerArray[logicServerIndex].GetServerSession().SendJsonMsg(msgId, js)
 }
 
 func (s *SSSessionMgr) SSServerConnect(verifySpec VerifySessionSpec, remoteSepc RemoteSessionSpec) {
 	session := s.CreateSession(false)
-	if session != nil {
-		session.SetRemoteAddr(remoteSepc.Addr)
-		cache := &SSSessionCache{
-			ServerID:      remoteSepc.ServerID,
-			ServerType:    remoteSepc.ServerType,
-			ServerTypeStr: remoteSepc.ServerTypeStr,
-			ConnectTick:   getMillsecond() + SSOnceConnectMaxTime,
-		}
-		s.connectingCache[remoteSepc.ServerID] = cache
-		ELog.Infof("[SSSessionMgr]ConnectCache Add ServerId=%v,ServerType=%v", remoteSepc.ServerID, remoteSepc.ServerTypeStr)
-
-		serverSession := session.(*SSSession)
-		serverSession.SetVerifySpec(verifySpec)
-		serverSession.SetRemoteSpec(remoteSepc)
-		GNet.Connect(remoteSepc.Addr, serverSession)
+	session.SetRemoteAddr(remoteSepc.Addr)
+	cache := &SSSessionCache{
+		ServerID:      remoteSepc.ServerID,
+		ServerType:    remoteSepc.ServerType,
+		ServerTypeStr: remoteSepc.ServerTypeStr,
+		ConnectTick:   getMillsecond() + SSOnceConnectMaxTime,
 	}
+	s.connectingCache[remoteSepc.ServerID] = cache
+	ELog.Infof("[SSSessionMgr]ConnectCache Add ServerId=%v,ServerType=%v", remoteSepc.ServerID, remoteSepc.ServerTypeStr)
+
+	serverSession := session.(*SSSession)
+	serverSession.SetVerifySpec(verifySpec)
+	serverSession.SetRemoteSpec(remoteSepc)
+	GNet.Connect(remoteSepc.Addr, serverSession)
 }
 
 func (s *SSSessionMgr) SSServerListen(addr string) bool {
