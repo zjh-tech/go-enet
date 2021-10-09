@@ -33,7 +33,9 @@ func (n *Net) Init() bool {
 }
 
 func (n *Net) UnInit() {
-	ELog.Info("[Net] UnInit")
+	if ELog != nil {
+		ELog.Info("[Net] UnInit")
+	}
 }
 
 func (n *Net) PushEvent(evt IEvent) {
