@@ -17,6 +17,7 @@ type Net struct {
 	httpEvtQueue IEventQueue
 	connQueue    chan ConnEvent
 	connState    uint32
+	multiFlag    bool
 }
 
 func NewNet(maxEvtCount uint32, maxConnCount uint32) *Net {
@@ -24,6 +25,7 @@ func NewNet(maxEvtCount uint32, maxConnCount uint32) *Net {
 		evtQueue:     newEventQueue(maxEvtCount),
 		httpEvtQueue: newEventQueue(maxConnCount),
 		connQueue:    make(chan ConnEvent, maxConnCount),
+		multiFlag:    false,
 	}
 }
 
@@ -39,8 +41,23 @@ func (n *Net) UnInit() {
 }
 
 func (n *Net) PushEvent(evt IEvent) {
+	// if n.multiFlag {
+	// 	GWorkGoroutinePool.PushEvent(evt)
+	// } else {
+	// 	n.evtQueue.PushEvent(evt)
+	// }
+
 	n.evtQueue.PushEvent(evt)
 }
+
+// func (n *Net) SetMultiProcessMsg() {
+// 	n.multiFlag = true
+// 	if GWorkGoroutinePool == nil {
+// 		chanSize := 100000
+// 		GWorkGoroutinePool = NewWorkGoroutinePool(runtime.NumCPU(), chanSize)
+// 		GWorkGoroutinePool.Init()
+// 	}
+// }
 
 func (n *Net) PushSingleHttpEvent(httpEvt IHttpEvent) {
 	n.httpEvtQueue.PushEvent(httpEvt)
