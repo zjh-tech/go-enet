@@ -79,6 +79,11 @@ func DoMsgHandler(evt IEvent) {
 		return
 	}
 
+	defer func() {
+		if err := recover(); err != nil {
+			ELog.Errorf("DoMsgHandler", err)
+		}
+	}()
 	evt.ProcessMsg()
 }
 
