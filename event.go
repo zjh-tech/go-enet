@@ -1,5 +1,7 @@
 package enet
 
+import "errors"
+
 //Tcp
 type TcpEvent struct {
 	eventType uint32
@@ -50,31 +52,21 @@ type HttpEvent struct {
 	httpConn IHttpConnection
 	router   string
 	datas    []byte
-	paras    interface{}
-	cbFunc   HttpCbFunc
 }
 
-func NewHttpEvent(httpConn IHttpConnection, router string, cbFunc HttpCbFunc, datas []byte, paras interface{}) *HttpEvent {
+func NewHttpEvent(httpConn IHttpConnection, router string, datas []byte) *HttpEvent {
 	return &HttpEvent{
 		httpConn: httpConn,
 		router:   router,
 		datas:    datas,
-		paras:    paras,
-		cbFunc:   cbFunc,
 	}
 }
 
-func (h *HttpEvent) ProcessMsg() bool {
+func (h *HttpEvent) ProcessMsg() (interface{}, error) {
 	if h.httpConn == nil {
 		ELog.Error("[Net] ProcessMsg Run HttpConnection Is Nil")
-		return false
+		return nil, errors.New("[Net] ProcessMsg Run HttpConnection Is Nil")
 	}
 
-	if h.cbFunc != nil {
-		h.cbFunc(h.datas, h.paras)
-	} else {
-		h.httpConn.OnHandler(h.router, h.datas, h.paras)
-	}
-
-	return true
+	return h.httpConn.OnHandler(h.router, h.datas)
 }

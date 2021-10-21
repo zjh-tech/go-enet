@@ -431,28 +431,28 @@ func (s *SSSessionMgr) BroadcastMsg(serverType uint32, msgId uint32, datas []byt
 	}
 }
 
-func (s *SSSessionMgr) SendProtoMsgByRandom(serverType uint32, msgId uint32, msg proto.Message) {
+func (s *SSSessionMgr) SendProtoMsgByRandom(serverType uint32, msgId uint32, msg proto.Message) bool {
 	logicServerArray := s.findLogicServerByServerType(serverType)
 	logicServerLen := uint64(len(logicServerArray))
 	if logicServerLen == 0 {
 		ELog.Warnf("ServerType=%v,MsgId=%v,Msg=%v SendProtoMsgByRandom Len=0", serverType, msgId, msg)
-		return
+		return false
 	}
 
 	logicServerIndex := rand.Intn(int(logicServerLen))
-	logicServerArray[logicServerIndex].GetServerSession().SendProtoMsg(msgId, msg)
+	return logicServerArray[logicServerIndex].GetServerSession().SendProtoMsg(msgId, msg)
 }
 
-func (s *SSSessionMgr) SendJsonMsgByRandom(serverType uint32, msgId uint32, js interface{}) {
+func (s *SSSessionMgr) SendJsonMsgByRandom(serverType uint32, msgId uint32, js interface{}) bool {
 	logicServerArray := s.findLogicServerByServerType(serverType)
 	logicServerLen := uint64(len(logicServerArray))
 	if logicServerLen == 0 {
 		ELog.Warnf("ServerType=%v,MsgId=%v,Msg=%v SendJsonMsgByRandom Len=0", serverType, msgId, js)
-		return
+		return false
 	}
 
 	logicServerIndex := rand.Intn(int(logicServerLen))
-	logicServerArray[logicServerIndex].GetServerSession().SendJsonMsg(msgId, js)
+	return logicServerArray[logicServerIndex].GetServerSession().SendJsonMsg(msgId, js)
 }
 
 func (s *SSSessionMgr) SSServerConnect(verifySpec VerifySessionSpec, remoteSepc RemoteSessionSpec) {
