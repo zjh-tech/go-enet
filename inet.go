@@ -8,8 +8,6 @@ import (
 
 type INet interface {
 	PushEvent(IEvent)
-	PushSingleHttpEvent(IHttpEvent)
-	PushMultiHttpEvent(IHttpEvent)
 	Connect(addr string, sess ISession)
 	Listen(addr string, factory ISessionFactory, listenMaxCount int, sessionConcurrentFlag bool) bool
 	Run(loopCount int) bool

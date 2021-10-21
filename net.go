@@ -13,19 +13,17 @@ type ConnEvent struct {
 }
 
 type Net struct {
-	evtQueue     IEventQueue
-	httpEvtQueue IEventQueue
-	connQueue    chan ConnEvent
-	connState    uint32
-	multiFlag    bool
+	evtQueue  IEventQueue
+	connQueue chan ConnEvent
+	connState uint32
+	multiFlag bool
 }
 
 func NewNet(maxEvtCount uint32, maxConnCount uint32) *Net {
 	return &Net{
-		evtQueue:     newEventQueue(maxEvtCount),
-		httpEvtQueue: newEventQueue(maxConnCount),
-		connQueue:    make(chan ConnEvent, maxConnCount),
-		multiFlag:    false,
+		evtQueue:  newEventQueue(maxEvtCount),
+		connQueue: make(chan ConnEvent, maxConnCount),
+		multiFlag: false,
 	}
 }
 
@@ -58,14 +56,6 @@ func (n *Net) PushEvent(evt IEvent) {
 // 		GWorkGoroutinePool.Init()
 // 	}
 // }
-
-func (n *Net) PushSingleHttpEvent(httpEvt IHttpEvent) {
-	n.httpEvtQueue.PushEvent(httpEvt)
-}
-
-func (n *Net) PushMultiHttpEvent(httpEvt IHttpEvent) {
-	httpEvt.ProcessMsg()
-}
 
 func (n *Net) Listen(addr string, factory ISessionFactory, listenMaxCount int, sessionConcurrentFlag bool) bool {
 	ELog.Infof("[Net] Start ListenTCP Addr=%v", addr)
@@ -180,12 +170,6 @@ func (n *Net) Run(loopCount int) bool {
 			}
 			tcpEvt := evt.(*TcpEvent)
 			tcpEvt.ProcessMsg()
-		case evt, ok := <-n.httpEvtQueue.GetEventQueue():
-			if !ok {
-				return false
-			}
-			httpEvt := evt.(*HttpEvent)
-			httpEvt.ProcessMsg()
 		default:
 			return false
 		}
