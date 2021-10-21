@@ -130,7 +130,7 @@ type ISessionFactory interface {
 }
 
 //Http
-type HttpCbFunc func(datas []byte, paras interface{}) (interface{}, error)
+type HttpCbFunc func(datas []byte) (interface{}, error)
 type IHttpConnection interface {
 	OnHandler(router string, datas []byte) (interface{}, error)
 }
