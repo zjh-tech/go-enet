@@ -360,14 +360,16 @@ func (s *SSSessionMgr) GetLogicServerFactory() ILogicServerFactory {
 	return s.logicServerFactory
 }
 
-func (s *SSSessionMgr) SendMsgByServerID(serverId uint64, msgId uint32, datas []byte) {
+func (s *SSSessionMgr) SendMsgByServerID(serverId uint64, msgId uint32, datas []byte) bool {
 	for _, session := range s.sessMap {
 		serversess := session.(*SSSession)
 		if serversess.remoteSpec.ServerID == serverId {
 			serversess.SendMsg(msgId, datas)
-			return
+			return true
 		}
 	}
+
+	return false
 }
 
 func (s *SSSessionMgr) SendProtoMsgByServerId(serverId uint64, msgId uint32, msg proto.Message) bool {
