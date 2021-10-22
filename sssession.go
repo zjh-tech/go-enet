@@ -370,7 +370,7 @@ func (s *SSSessionMgr) SendMsg(serverId uint64, msgId uint32, datas []byte) {
 	}
 }
 
-func (s *SSSessionMgr) SendProtoMsg(serverId uint64, msgId uint32, msg proto.Message) bool {
+func (s *SSSessionMgr) SendProtoMsgByServerId(serverId uint64, msgId uint32, msg proto.Message) bool {
 	if serverId == 0 {
 		return false
 	}
