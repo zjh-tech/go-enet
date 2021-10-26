@@ -351,7 +351,6 @@ func (s *SSSessionMgr) AddSession(sess ISession) {
 	serversess := sess.(*SSSession)
 	if _, ok := s.connectingCache[serversess.GetRemoteServerID()]; ok {
 		ELog.Infof("[SSSessionMgr] AddSession Triggle ConnectCache Del ServerId=%v,ServerType=%v", serversess.GetRemoteServerID(), serversess.GetRemoteServerType())
-
 		delete(s.connectingCache, serversess.GetRemoteServerID())
 	}
 }

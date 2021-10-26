@@ -256,6 +256,15 @@ func (c *CSSessionMgr) BroadcastJsonMsg(msgId uint32, js interface{}) {
 	}
 }
 
+func (c *CSSessionMgr) ExecAll(cb func(sess *CSSession) bool) {
+	for _, session := range c.sessMap {
+		serversess := session.(*CSSession)
+		if cb(serversess) {
+			return
+		}
+	}
+}
+
 func (c *CSSessionMgr) Connect(addr string, handler ICSMsgHandler, coder ICoder, sessionConcurrentFlag bool, attach interface{}) uint64 {
 	if coder == nil {
 		coder = NewCoder()
