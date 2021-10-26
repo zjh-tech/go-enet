@@ -3,7 +3,7 @@ package enet
 import (
 	"encoding/json"
 
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 )
 
 type Session struct {
@@ -19,6 +19,7 @@ type Session struct {
 	exitSessionConcurrentChan chan struct{}
 	localAddr                 string
 	remoteAddr                string
+	terminateFlag             bool
 }
 
 func (s *Session) SetSessionConcurrentFlag(flag bool) {
@@ -148,10 +149,15 @@ func (s *Session) StopSessionConcurrentGoroutine() {
 }
 
 func (s *Session) Terminate() {
+	s.terminateFlag = true
 	if s.conn != nil {
 		s.conn.Terminate()
 		ELog.Infof("[Session] Terminate SesssionID=%v", s.GetSessID())
 	}
+}
+
+func (s *Session) GetTerminate() bool {
+	return s.terminateFlag
 }
 
 func (s *Session) SendMsg(msgId uint32, datas []byte) bool {

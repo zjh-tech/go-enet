@@ -5,7 +5,7 @@ import (
 	"math"
 	"math/rand"
 
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -121,6 +121,10 @@ func (s *SSSession) OnVerify() {
 }
 
 func (s *SSSession) Update() {
+	if s.GetTerminate() {
+		return
+	}
+
 	now := getMillsecond()
 	if (s.lastCheckBeatHeartTime + SSBeatHeartMaxTime) < now {
 		ELog.Errorf("[SSSession] Remote [ID=%v,Type=%v,Addr=%v] BeatHeart Exception", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
@@ -288,15 +292,27 @@ func (s *SSSessionMgr) CreateSession(isListenFlag bool) ISession {
 }
 
 func (s *SSSessionMgr) findLogicServerByServerType(serverType uint32) []ILogicServer {
-	sessArray := make([]ILogicServer, 0)
+	retArray := make([]ILogicServer, 0)
 	for _, session := range s.sessMap {
 		serversess := session.(*SSSession)
 		if serversess.remoteSpec.ServerType == serverType {
-			sessArray = append(sessArray, serversess.logicServer)
+			retArray = append(retArray, serversess.logicServer)
 		}
 	}
 
-	return sessArray
+	return retArray
+}
+
+func (s *SSSessionMgr) FindServerIdsByServerType(serverType uint32) []uint64 {
+	retArray := make([]uint64, 0)
+	for _, session := range s.sessMap {
+		serversess := session.(*SSSession)
+		if serversess.remoteSpec.ServerType == serverType {
+			retArray = append(retArray, serversess.GetSessID())
+		}
+	}
+
+	return retArray
 }
 
 func (s *SSSessionMgr) FindSessionByServerId(serverId uint64) ISession {

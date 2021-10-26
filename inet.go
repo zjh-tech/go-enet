@@ -3,7 +3,7 @@ package enet
 import (
 	"net"
 
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 )
 
 type INet interface {
@@ -76,6 +76,8 @@ type ISession interface {
 	OnEstablish()
 
 	OnTerminate()
+
+	GetTerminate() bool
 
 	GetCoder() ICoder
 

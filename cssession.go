@@ -3,7 +3,7 @@ package enet
 import (
 	"math/rand"
 
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -56,6 +56,10 @@ func (c *CSSession) OnEstablish() {
 }
 
 func (c *CSSession) Update() {
+	if c.GetTerminate() {
+		return
+	}
+
 	now := getMillsecond()
 	if (c.lastCheckBeatHeartTime + C2SBeatHeartMaxTime) < now {
 		ELog.Errorf("CSSession %v  BeatHeart Exception", c.GetSessID())
