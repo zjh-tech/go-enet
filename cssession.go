@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	C2SBeatHeartMaxTime  int64 = 1000 * 60 * 2
+	C2SBeatHeartMaxTime  int64 = 1000 * 60 * 5
 	C2SSendBeatHeartTime int64 = 1000 * 20
 	CsMgrUpdateTime      int64 = 1000 * 1
 	CsOnceConnectMaxTime int64 = 1000 * 10
