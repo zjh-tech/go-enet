@@ -15,7 +15,7 @@ const (
 )
 
 const (
-	SSBeatHeartMaxTime   int64 = 1000 * 60 * 2
+	SSBeatHeartMaxTime   int64 = 1000 * 60 * 5
 	SSBeatSendHeartTime  int64 = 1000 * 20
 	SSOnceConnectMaxTime int64 = 1000 * 10
 	SSMgrOutputTime      int64 = 1000 * 60
