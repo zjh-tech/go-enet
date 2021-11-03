@@ -383,7 +383,7 @@ func (s *SSSessionMgr) SendMsgByServerID(serverId uint64, msgId uint32, datas []
 			return true
 		}
 	}
-
+	ELog.Warnf("SSSessionMgr SendMsgByServerID ServerId=%v,MsgId=%v Error", serverId, msgId)
 	return false
 }
 
@@ -399,7 +399,7 @@ func (s *SSSessionMgr) SendProtoMsgByServerId(serverId uint64, msgId uint32, msg
 			return true
 		}
 	}
-
+	ELog.Warnf("SSSessionMgr SendProtoMsgByServerId ServerId=%v,MsgId=%v Error", serverId, msgId)
 	return false
 }
 
@@ -408,7 +408,7 @@ func (s *SSSessionMgr) SendProtoMsgBySessionID(sessionID uint64, msgId uint32, m
 	if ok {
 		return serversess.SendProtoMsg(msgId, msg)
 	}
-
+	ELog.Warnf("SSSessionMgr SendProtoMsgBySessionID SessionId=%v,MsgId=%v Error", sessionID, msgId)
 	return false
 }
 
@@ -417,7 +417,7 @@ func (s *SSSessionMgr) SendJsonMsgBySessionID(sessionID uint64, msgId uint32, js
 	if ok {
 		return serversess.SendJsonMsg(msgId, js)
 	}
-
+	ELog.Warnf("SSSessionMgr SendJsonMsgBySessionID SessionId=%v,MsgId=%v Error", sessionID, msgId)
 	return false
 }
 
