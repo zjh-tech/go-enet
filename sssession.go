@@ -389,6 +389,7 @@ func (s *SSSessionMgr) SendMsgByServerID(serverId uint64, msgId uint32, datas []
 
 func (s *SSSessionMgr) SendProtoMsgByServerId(serverId uint64, msgId uint32, msg proto.Message) bool {
 	if serverId == 0 {
+		ELog.Errorf("SSSessionMgr SendProtoMsgByServerId ServerId=0 MsgId=%v", msgId)
 		return false
 	}
 
