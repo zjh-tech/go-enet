@@ -92,7 +92,7 @@ func (s *SSSession) OnEstablish() {
 	s.factory.AddSession(s)
 	s.sessState = SessVerifyState
 	if s.IsConnectType() {
-		ELog.Infof("[SSSession] Remote [ID=%v,Type=%v,Addr=%v] Establish Send Verify Req", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
+		ELog.Debugf("[SSSession] Remote [ID=%v,Type=%v,Addr=%v] Establish Send Verify Req", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
 		req := &S2SSessionVerifyReq{
 			ServerId:      s.verifySpec.ServerID,
 			ServerType:    s.verifySpec.ServerType,
@@ -111,7 +111,7 @@ func (s *SSSession) OnEstablish() {
 
 func (s *SSSession) OnVerify() {
 	s.sessState = SessEstablishState
-	ELog.Infof("[SSSession] Remote [ID=%v,Type=%v,Ip=%v] Verify Ok", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
+	ELog.Debugf("[SSSession] Remote [ID=%v,Type=%v,Ip=%v] Verify Ok", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
 
 	factory := s.GetSessionFactory()
 	ssserverfactory := factory.(*SSSessionMgr)
@@ -158,70 +158,86 @@ func (s *SSSession) OnTerminate() {
 
 func (s *SSSession) OnHandler(msgId uint32, datas []byte) {
 	if msgId == S2SSessionVerifyReqId && s.IsListenType() {
-		verifyReq := &S2SSessionVerifyReq{}
-		err := json.Unmarshal(datas, verifyReq)
-		if err != nil {
-			ELog.Infof("[SSSession] S2SSessionVerifyReq Json Unmarshal Error")
-			return
-		}
-
-		var VerifyResFunc = func(errorCode uint32) {
-			if errorCode == MsgFail {
-				s.Terminate()
-				return
-			}
-			s.SendMsg(S2SSessionVerifyResId, nil)
-		}
-
-		factory := s.GetSessionFactory()
-		ssserverfactory := factory.(*SSSessionMgr)
-		if ssserverfactory.FindSessionByServerId(verifyReq.ServerId) != nil {
-			//相同的配置的ServerID服务器接入:保留旧的连接,断开新的连接
-			ELog.Infof("SSSession VerifyReq ServerId=%v Already Exist", verifyReq.ServerId)
-			VerifyResFunc(MsgFail)
-			return
-		}
-
-		var remoteSpec RemoteSessionSpec
-		remoteSpec.ServerID = verifyReq.ServerId
-		remoteSpec.ServerType = verifyReq.ServerType
-		remoteSpec.ServerTypeStr = verifyReq.ServerTypeStr
-		remoteSpec.Addr = verifyReq.Addr
-		s.SetRemoteSpec(remoteSpec)
-
-		if verifyReq.Token != s.localToken {
-			ELog.Errorf("[SSSession] Remote [ID=%v,Type=%v,Addr=%v] Recv Verify Error", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
-			VerifyResFunc(MsgFail)
-			return
-		}
-
-		ELog.Infof("[SSSession] Remote [ID=%v,Type=%v,Addr=%v] Recv Verify Ok", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
-		s.OnVerify()
-		VerifyResFunc(MsgSuccess)
+		s.OnHandlerS2SSessionVerifyReq(msgId, datas)
 		return
 	}
 
 	if msgId == S2SSessionVerifyResId && s.IsConnectType() {
-		ELog.Infof("[SSSession] Remote [ID=%v,Type=%v,Addr=%v] Recv Verify Ack Ok", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
-		s.OnVerify()
+		s.OnHandlerS2SSessionVerifyRes(msgId, datas)
 		return
 	}
 
 	if msgId == S2SSessionPingId && s.IsListenType() {
-		ELog.Debugf("[SSSession] Remote [ID=%v,Type=%v,Addr=%v] Recv Ping Send Pong", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
-		s.lastCheckBeatHeartTime = getMillsecond()
-		s.SendMsg(S2SSessionPongId, nil)
+		s.OnHandlerS2SSessionPing(msgId, datas)
 		return
 	}
 
 	if msgId == S2SSessionPongId && s.IsConnectType() {
-		ELog.Debugf("[SSSession] Remote [ID=%v,Type=%v,Addr=%v] Recv Pong", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
-		s.lastCheckBeatHeartTime = getMillsecond()
+		s.OnHandlerS2SSessionPong(msgId, datas)
 		return
 	}
 
 	s.lastCheckBeatHeartTime = getMillsecond()
 	s.logicServer.OnHandler(msgId, datas, s)
+}
+
+func (s *SSSession) OnHandlerS2SSessionVerifyReq(msgId uint32, datas []byte) {
+	verifyReq := &S2SSessionVerifyReq{}
+	err := json.Unmarshal(datas, verifyReq)
+	if err != nil {
+		ELog.Infof("[SSSession] S2SSessionVerifyReq Json Unmarshal Error")
+		return
+	}
+
+	var VerifyResFunc = func(errorCode uint32) {
+		if errorCode == MsgFail {
+			s.Terminate()
+			return
+		}
+		s.SendMsg(S2SSessionVerifyResId, nil)
+	}
+
+	factory := s.GetSessionFactory()
+	ssserverfactory := factory.(*SSSessionMgr)
+	if ssserverfactory.FindSessionByServerId(verifyReq.ServerId) != nil {
+		//相同的配置的ServerID服务器接入:保留旧的连接,断开新的连接
+		ELog.Infof("SSSession VerifyReq ServerId=%v Already Exist", verifyReq.ServerId)
+		VerifyResFunc(MsgFail)
+		return
+	}
+
+	var remoteSpec RemoteSessionSpec
+	remoteSpec.ServerID = verifyReq.ServerId
+	remoteSpec.ServerType = verifyReq.ServerType
+	remoteSpec.ServerTypeStr = verifyReq.ServerTypeStr
+	remoteSpec.Addr = verifyReq.Addr
+	s.SetRemoteSpec(remoteSpec)
+
+	if verifyReq.Token != s.localToken {
+		ELog.Errorf("[SSSession] Remote [ID=%v,Type=%v,Addr=%v] Recv Verify Error", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
+		VerifyResFunc(MsgFail)
+		return
+	}
+
+	ELog.Debugf("[SSSession] Remote [ID=%v,Type=%v,Addr=%v] Recv Verify Ok", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
+	s.OnVerify()
+	VerifyResFunc(MsgSuccess)
+}
+
+func (s *SSSession) OnHandlerS2SSessionVerifyRes(msgId uint32, datas []byte) {
+	ELog.Debugf("[SSSession] Remote [ID=%v,Type=%v,Addr=%v] Recv Verify Ack Ok", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
+	s.OnVerify()
+}
+
+func (s *SSSession) OnHandlerS2SSessionPing(msgId uint32, datas []byte) {
+	ELog.Debugf("[SSSession] Remote [ID=%v,Type=%v,Addr=%v] Recv Ping Send Pong", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
+	s.lastCheckBeatHeartTime = getMillsecond()
+	s.SendMsg(S2SSessionPongId, nil)
+}
+
+func (s *SSSession) OnHandlerS2SSessionPong(msgId uint32, datas []byte) {
+	ELog.Debugf("[SSSession] Remote [ID=%v,Type=%v,Addr=%v] Recv Pong", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
+	s.lastCheckBeatHeartTime = getMillsecond()
 }
 
 //----------------------------------------------------------------------
