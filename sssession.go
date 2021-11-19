@@ -150,10 +150,12 @@ func (s *SSSession) OnTerminate() {
 	factory := s.GetSessionFactory()
 	ssserverfactory := factory.(*SSSessionMgr)
 	ssserverfactory.RemoveSession(s.sessId)
-	s.logicServer.SetServerSession(nil)
 	s.sessState = SessCloseState
-
-	s.logicServer.OnTerminate(s)
+	if s.logicServer != nil {
+		//verify fail logicserver is nil
+		s.logicServer.SetServerSession(nil)
+		s.logicServer.OnTerminate(s)
+	}
 }
 
 func (s *SSSession) OnHandler(msgId uint32, datas []byte) {

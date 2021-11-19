@@ -2,7 +2,7 @@ package enet
 
 import "runtime"
 
-//C++ 避免创建Goroutine来回创建
+//C++ 避免创建Goroutine来回创建,如果有阻塞操作,例如http验证等...
 //Go  每个Session有个Channel,每个Entity有个Channel,并发的数量可以动态(建议使用这种模式)
 
 type WorkGoroutinePool struct {
