@@ -58,6 +58,10 @@ func (n *Net) PushEvent(evt IEvent) {
 // }
 
 func (n *Net) Listen(addr string, factory ISessionFactory, listenMaxCount int, sessionConcurrentFlag bool) bool {
+	if addr == "" {
+		return false
+	}
+
 	ELog.Infof("[Net] Start ListenTCP Addr=%v", addr)
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", addr)
 	if err != nil {
