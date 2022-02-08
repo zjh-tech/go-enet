@@ -10,25 +10,25 @@ import (
 )
 
 type Connection struct {
-	connId      uint64
-	net         INet
-	conn        *net.TCPConn
-	msgBuffChan chan []byte
-	exitChan    chan struct{}
-	session     ISession
-	state       atomic.Uint32
+	connId       uint64
+	net          INet
+	conn         *net.TCPConn
+	sendBuffChan chan []byte
+	exitChan     chan struct{}
+	session      ISession
+	state        atomic.Uint32
 }
 
 func NewConnection(connId uint64, net INet, conn *net.TCPConn, sess ISession) *Connection {
 	ELog.Infof("[Net][Connection] ConnID=%v Bind SessID=%v", connId, sess.GetSessID())
 	return &Connection{
-		connId:      connId,
-		net:         net,
-		conn:        conn,
-		session:     sess,
-		msgBuffChan: make(chan []byte, ConnectChannelMaxSize),
-		exitChan:    make(chan struct{}),
-		state:       *atomic.NewUint32(ConnEstablishState),
+		connId:       connId,
+		net:          net,
+		conn:         conn,
+		session:      sess,
+		sendBuffChan: make(chan []byte, SendBuffMaxSize),
+		exitChan:     make(chan struct{}),
+		state:        *atomic.NewUint32(ConnEstablishState),
 	}
 }
 
@@ -43,7 +43,7 @@ func (c *Connection) writerGoroutine() {
 	ioWriter := bufio.NewWriter(c.conn)
 	var err error
 	for {
-		if len(c.msgBuffChan) == 0 && ioWriter.Buffered() != 0 {
+		if len(c.sendBuffChan) == 0 && ioWriter.Buffered() != 0 {
 			if err = ioWriter.Flush(); err != nil {
 				ELog.Errorf("[Net][Connection] ConnID=%v Write Goroutine Exit Flush Error=%v", c.connId, err)
 				return
@@ -51,7 +51,7 @@ func (c *Connection) writerGoroutine() {
 		}
 
 		select {
-		case datas, ok := <-c.msgBuffChan:
+		case datas, ok := <-c.sendBuffChan:
 			if !ok {
 				ELog.Errorf("[Net][Connection] Write ConnID=%v MsgBuffChan Ok Error", c.connId)
 				return
@@ -170,7 +170,7 @@ func (c *Connection) close(terminate bool) {
 				select {
 				case <-closeTimer.C:
 					{
-						if len(c.msgBuffChan) <= 0 {
+						if len(c.sendBuffChan) <= 0 {
 							c.onClose()
 							return
 						}
@@ -207,7 +207,7 @@ func (c *Connection) AsyncSend(datas []byte) {
 		return
 	}
 
-	c.msgBuffChan <- datas
+	c.sendBuffChan <- datas
 }
 
 func (c *Connection) GetSession() ISession {

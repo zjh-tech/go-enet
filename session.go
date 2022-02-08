@@ -14,7 +14,7 @@ type Session struct {
 	coder                     ICoder
 	sessType                  SessionType
 	factory                   ISessionFactory
-	evtQueue                  IEventQueue
+	recvEvtQueue              IEventQueue
 	sessionConcurrentFlag     bool
 	exitSessionConcurrentChan chan struct{}
 	localAddr                 string
@@ -25,7 +25,7 @@ type Session struct {
 func (s *Session) SetSessionConcurrentFlag(flag bool) {
 	s.sessionConcurrentFlag = flag
 	if s.sessionConcurrentFlag {
-		s.evtQueue = newEventQueue(NetChannelMaxSize)
+		s.recvEvtQueue = newEventQueue(RecvBuffMaxSize)
 	}
 }
 
@@ -34,7 +34,7 @@ func (s *Session) GetSessionConcurrentFlag() bool {
 }
 
 func (s *Session) PushEvent(evt IEvent) {
-	s.evtQueue.PushEvent(evt)
+	s.recvEvtQueue.PushEvent(evt)
 }
 
 func (s *Session) SetConnection(conn IConnection) {
@@ -131,7 +131,7 @@ func (s *Session) StartSessionConcurrentGoroutine() {
 
 		for {
 			select {
-			case evt, ok := <-s.evtQueue.GetEventQueue():
+			case evt, ok := <-s.recvEvtQueue.GetEventQueue():
 				if !ok {
 					return
 				}

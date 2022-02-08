@@ -13,17 +13,17 @@ type ConnEvent struct {
 }
 
 type Net struct {
-	evtQueue  IEventQueue
-	connQueue chan ConnEvent
-	connState uint32
-	multiFlag bool
+	recvEvtQueue IEventQueue
+	connQueue    chan ConnEvent
+	connState    uint32
+	multiFlag    bool
 }
 
 func NewNet(maxEvtCount uint32, maxConnCount uint32) *Net {
 	return &Net{
-		evtQueue:  newEventQueue(maxEvtCount),
-		connQueue: make(chan ConnEvent, maxConnCount),
-		multiFlag: false,
+		recvEvtQueue: newEventQueue(maxEvtCount),
+		connQueue:    make(chan ConnEvent, maxConnCount),
+		multiFlag:    false,
 	}
 }
 
@@ -42,10 +42,10 @@ func (n *Net) PushEvent(evt IEvent) {
 	// if n.multiFlag {
 	// 	GWorkGoroutinePool.PushEvent(evt)
 	// } else {
-	// 	n.evtQueue.PushEvent(evt)
+	// 	n.recvEvtQueue.PushEvent(evt)
 	// }
 
-	n.evtQueue.PushEvent(evt)
+	n.recvEvtQueue.PushEvent(evt)
 }
 
 // func (n *Net) SetMultiProcessMsg() {
@@ -168,7 +168,7 @@ func (n *Net) Run(loopCount int) bool {
 	i := 0
 	for ; i < loopCount; i++ {
 		select {
-		case evt, ok := <-n.evtQueue.GetEventQueue():
+		case evt, ok := <-n.recvEvtQueue.GetEventQueue():
 			if !ok {
 				return false
 			}
