@@ -509,8 +509,8 @@ func (s *SSSessionMgr) SSServerConnect(verifySpec VerifySessionSpec, remoteSepc 
 	GNet.Connect(remoteSepc.Addr, serverSession, sendBuffMaxSize)
 }
 
-func (s *SSSessionMgr) SSServerListen(addr string, sendBuffMaxSize uint32) bool {
-	return GNet.Listen(addr, s, math.MaxInt32, sendBuffMaxSize, false)
+func (s *SSSessionMgr) SSServerListen(addr string, sendBuffMaxSize uint32, recvBuffMaxSize uint32) bool {
+	return GNet.Listen(addr, s, math.MaxInt32, sendBuffMaxSize, recvBuffMaxSize, false)
 }
 
 var GSSSessionMgr *SSSessionMgr

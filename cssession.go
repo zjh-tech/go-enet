@@ -284,7 +284,7 @@ func (c *CSSessionMgr) ExecAll(cb func(sess *CSSession) bool) {
 	})
 }
 
-func (c *CSSessionMgr) Connect(addr string, handler ICSMsgHandler, coder ICoder, sendBuffMaxSize uint32, sessionConcurrentFlag bool, attach interface{}) uint64 {
+func (c *CSSessionMgr) Connect(addr string, handler ICSMsgHandler, coder ICoder, sendBuffMaxSize uint32, recvBuffMaxSize uint32, sessionConcurrentFlag bool, attach interface{}) uint64 {
 	if coder == nil {
 		coder = NewCoder()
 	}
@@ -295,7 +295,7 @@ func (c *CSSessionMgr) Connect(addr string, handler ICSMsgHandler, coder ICoder,
 	sess.SetAttach(attach)
 	sess.SetRemoteAddr(addr)
 	if sessionConcurrentFlag {
-		sess.SetSessionConcurrentFlag(true)
+		sess.SetSessionConcurrentFlag(true, recvBuffMaxSize)
 	}
 
 	cache := &CSSessionCache{
@@ -309,14 +309,14 @@ func (c *CSSessionMgr) Connect(addr string, handler ICSMsgHandler, coder ICoder,
 	return sess.GetSessID()
 }
 
-func (c *CSSessionMgr) Listen(addr string, handler ICSMsgHandler, coder ICoder, listenMaxCount int, sendBuffMaxSize uint32, sessionConcurrentFlag bool) bool {
+func (c *CSSessionMgr) Listen(addr string, handler ICSMsgHandler, coder ICoder, listenMaxCount int, sendBuffMaxSize uint32, recvBuffMaxSize uint32, sessionConcurrentFlag bool) bool {
 	if coder == nil {
 		coder = NewCoder()
 	}
 
 	c.coder = coder
 	c.handler = handler
-	return GNet.Listen(addr, c, listenMaxCount, sendBuffMaxSize, sessionConcurrentFlag)
+	return GNet.Listen(addr, c, listenMaxCount, sendBuffMaxSize, recvBuffMaxSize, sessionConcurrentFlag)
 }
 
 var GCSSessionMgr *CSSessionMgr

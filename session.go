@@ -22,10 +22,10 @@ type Session struct {
 	terminateFlag             bool
 }
 
-func (s *Session) SetSessionConcurrentFlag(flag bool) {
+func (s *Session) SetSessionConcurrentFlag(flag bool, recvBuffMaxSize uint32) {
 	s.sessionConcurrentFlag = flag
 	if s.sessionConcurrentFlag {
-		s.recvEvtQueue = newEventQueue(RecvBuffMaxSize)
+		s.recvEvtQueue = newEventQueue(recvBuffMaxSize)
 	}
 }
 

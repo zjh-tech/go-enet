@@ -9,7 +9,7 @@ import (
 type INet interface {
 	PushEvent(IEvent)
 	Connect(addr string, sess ISession, sendBuffMaxSize uint32)
-	Listen(addr string, factory ISessionFactory, listenMaxCount int, sendBuffMaxSize uint32, sessionConcurrentFlag bool) bool
+	Listen(addr string, factory ISessionFactory, listenMaxCount int, sendBuffMaxSize uint32, recvBuffMaxSize uint32, sessionConcurrentFlag bool) bool
 	Run(loopCount int) bool
 }
 
@@ -59,7 +59,7 @@ type IEvent interface {
 
 //ISession
 type ISession interface {
-	SetSessionConcurrentFlag(flag bool)
+	SetSessionConcurrentFlag(flag bool, recvBuffMaxSize uint32)
 
 	GetSessionConcurrentFlag() bool
 

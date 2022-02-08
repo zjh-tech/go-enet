@@ -58,7 +58,7 @@ func (n *Net) PushEvent(evt IEvent) {
 // 	}
 // }
 
-func (n *Net) Listen(addr string, factory ISessionFactory, listenMaxCount int, sendBuffMaxSize uint32, sessionConcurrentFlag bool) bool {
+func (n *Net) Listen(addr string, factory ISessionFactory, listenMaxCount int, sendBuffMaxSize uint32, recvBuffMaxSize uint32, sessionConcurrentFlag bool) bool {
 	if addr == "" {
 		return false
 	}
@@ -82,7 +82,7 @@ func (n *Net) Listen(addr string, factory ISessionFactory, listenMaxCount int, s
 
 	ELog.Infof("[Net] Addr=%v ListenTCP Success", tcpAddr)
 
-	go func(n *Net, sessfactory ISessionFactory, listen *net.TCPListener, listenMaxCount int, sessionConcurrentFlag bool, sendBuffMaxSize uint32) {
+	go func(n *Net, sessfactory ISessionFactory, listen *net.TCPListener, listenMaxCount int, sessionConcurrentFlag bool, sendBuffMaxSize uint32, recvBuffMaxSize uint32) {
 		for {
 			netConn, acceptErr := listen.AcceptTCP()
 			if acceptErr != nil {
@@ -108,13 +108,13 @@ func (n *Net) Listen(addr string, factory ISessionFactory, listenMaxCount int, s
 			session.SetRemoteAddr(netConn.RemoteAddr().String())
 
 			if sessionConcurrentFlag {
-				session.SetSessionConcurrentFlag(true)
+				session.SetSessionConcurrentFlag(true, recvBuffMaxSize)
 			}
 
 			conn := GConnectionMgr.Create(n, netConn, session, sendBuffMaxSize)
 			go conn.Start()
 		}
-	}(n, factory, listen, listenMaxCount, sessionConcurrentFlag, sendBuffMaxSize)
+	}(n, factory, listen, listenMaxCount, sessionConcurrentFlag, sendBuffMaxSize, recvBuffMaxSize)
 
 	return true
 }
