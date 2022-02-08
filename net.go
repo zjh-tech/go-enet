@@ -8,8 +8,9 @@ import (
 )
 
 type ConnEvent struct {
-	addr string
-	sess ISession
+	addr            string
+	sess            ISession
+	sendBuffMaxSize uint32
 }
 
 type Net struct {
@@ -57,7 +58,7 @@ func (n *Net) PushEvent(evt IEvent) {
 // 	}
 // }
 
-func (n *Net) Listen(addr string, factory ISessionFactory, listenMaxCount int, sessionConcurrentFlag bool) bool {
+func (n *Net) Listen(addr string, factory ISessionFactory, listenMaxCount int, sendBuffMaxSize uint32, sessionConcurrentFlag bool) bool {
 	if addr == "" {
 		return false
 	}
@@ -81,7 +82,7 @@ func (n *Net) Listen(addr string, factory ISessionFactory, listenMaxCount int, s
 
 	ELog.Infof("[Net] Addr=%v ListenTCP Success", tcpAddr)
 
-	go func(n *Net, sessfactory ISessionFactory, listen *net.TCPListener, listenMaxCount int, sessionConcurrentFlag bool) {
+	go func(n *Net, sessfactory ISessionFactory, listen *net.TCPListener, listenMaxCount int, sessionConcurrentFlag bool, sendBuffMaxSize uint32) {
 		for {
 			netConn, acceptErr := listen.AcceptTCP()
 			if acceptErr != nil {
@@ -110,18 +111,19 @@ func (n *Net) Listen(addr string, factory ISessionFactory, listenMaxCount int, s
 				session.SetSessionConcurrentFlag(true)
 			}
 
-			conn := GConnectionMgr.Create(n, netConn, session)
+			conn := GConnectionMgr.Create(n, netConn, session, sendBuffMaxSize)
 			go conn.Start()
 		}
-	}(n, factory, listen, listenMaxCount, sessionConcurrentFlag)
+	}(n, factory, listen, listenMaxCount, sessionConcurrentFlag, sendBuffMaxSize)
 
 	return true
 }
 
-func (n *Net) Connect(addr string, sess ISession) {
+func (n *Net) Connect(addr string, sess ISession, sendBuffMaxSize uint32) {
 	connEvt := ConnEvent{
-		addr: addr,
-		sess: sess,
+		addr:            addr,
+		sess:            sess,
+		sendBuffMaxSize: sendBuffMaxSize,
 	}
 	ELog.Infof("[Net] Connect Addr=%v In ConnQueue", addr)
 	n.connQueue <- connEvt
@@ -154,7 +156,7 @@ func (n *Net) doConnectGoroutine() {
 			}
 
 			evt.sess.SetLocalAddr(netConn.LocalAddr().String())
-			conn := GConnectionMgr.Create(n, netConn, evt.sess)
+			conn := GConnectionMgr.Create(n, netConn, evt.sess, evt.sendBuffMaxSize)
 			go conn.Start()
 		default:
 			return

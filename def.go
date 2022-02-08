@@ -36,11 +36,14 @@ const (
 const ConnWriterSleepLoopCount = 10000
 
 const (
-	NetChannelMaxSize     = 10000000
-	NetMaxConnectSize     = 65535
-	SendBuffMaxSize       = 100000
-	RecvBuffMaxSize       = 100000
+	NetChannelMaxSize = 10000000
+	NetMaxConnectSize = 65535
+	//SendBuffMaxSize       = 1000000
+	RecvBuffMaxSize       = 1000000
 	PackageDefaultMaxSize = 1024 * 64
+
+	SmallSendBuffMaxSize = 10000    //c-s
+	BigSendBuffMaxSize   = 10000000 //s-s
 )
 
 const (

@@ -284,7 +284,7 @@ func (c *CSSessionMgr) ExecAll(cb func(sess *CSSession) bool) {
 	})
 }
 
-func (c *CSSessionMgr) Connect(addr string, handler ICSMsgHandler, coder ICoder, sessionConcurrentFlag bool, attach interface{}) uint64 {
+func (c *CSSessionMgr) Connect(addr string, handler ICSMsgHandler, coder ICoder, sendBuffMaxSize uint32, sessionConcurrentFlag bool, attach interface{}) uint64 {
 	if coder == nil {
 		coder = NewCoder()
 	}
@@ -305,18 +305,18 @@ func (c *CSSessionMgr) Connect(addr string, handler ICSMsgHandler, coder ICoder,
 	}
 	c.cacheMap.Store(sess.GetSessID(), cache)
 	ELog.Infof("[CSSessionMgr]ConnectCache Add SessionID=%v,Addr=%v", sess.GetSessID(), addr)
-	GNet.Connect(addr, sess)
+	GNet.Connect(addr, sess, sendBuffMaxSize)
 	return sess.GetSessID()
 }
 
-func (c *CSSessionMgr) Listen(addr string, handler ICSMsgHandler, coder ICoder, listenMaxCount int, sessionConcurrentFlag bool) bool {
+func (c *CSSessionMgr) Listen(addr string, handler ICSMsgHandler, coder ICoder, listenMaxCount int, sendBuffMaxSize uint32, sessionConcurrentFlag bool) bool {
 	if coder == nil {
 		coder = NewCoder()
 	}
 
 	c.coder = coder
 	c.handler = handler
-	return GNet.Listen(addr, c, listenMaxCount, sessionConcurrentFlag)
+	return GNet.Listen(addr, c, listenMaxCount, sendBuffMaxSize, sessionConcurrentFlag)
 }
 
 var GCSSessionMgr *CSSessionMgr

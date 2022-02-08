@@ -8,8 +8,8 @@ import (
 
 type INet interface {
 	PushEvent(IEvent)
-	Connect(addr string, sess ISession)
-	Listen(addr string, factory ISessionFactory, listenMaxCount int, sessionConcurrentFlag bool) bool
+	Connect(addr string, sess ISession, sendBuffMaxSize uint32)
+	Listen(addr string, factory ISessionFactory, listenMaxCount int, sendBuffMaxSize uint32, sessionConcurrentFlag bool) bool
 	Run(loopCount int) bool
 }
 
@@ -47,7 +47,7 @@ type IConnection interface {
 }
 
 type IConnectionMgr interface {
-	Create(net INet, conn *net.TCPConn, sess ISession) IConnection
+	Create(net INet, conn *net.TCPConn, sess ISession, sendBuffMaxSize uint32) IConnection
 	Remove(id uint64)
 	GetConnCount() int
 }

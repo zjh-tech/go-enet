@@ -491,7 +491,7 @@ func (s *SSSessionMgr) SendJsonMsgByRandom(serverType uint32, msgId uint32, js i
 	return logicServerArray[logicServerIndex].GetServerSession().SendJsonMsg(msgId, js)
 }
 
-func (s *SSSessionMgr) SSServerConnect(verifySpec VerifySessionSpec, remoteSepc RemoteSessionSpec) {
+func (s *SSSessionMgr) SSServerConnect(verifySpec VerifySessionSpec, remoteSepc RemoteSessionSpec, sendBuffMaxSize uint32) {
 	session := s.CreateSession(false)
 	session.SetRemoteAddr(remoteSepc.Addr)
 	cache := &SSSessionCache{
@@ -506,11 +506,11 @@ func (s *SSSessionMgr) SSServerConnect(verifySpec VerifySessionSpec, remoteSepc 
 	serverSession := session.(*SSSession)
 	serverSession.SetVerifySpec(verifySpec)
 	serverSession.SetRemoteSpec(remoteSepc)
-	GNet.Connect(remoteSepc.Addr, serverSession)
+	GNet.Connect(remoteSepc.Addr, serverSession, sendBuffMaxSize)
 }
 
-func (s *SSSessionMgr) SSServerListen(addr string) bool {
-	return GNet.Listen(addr, s, math.MaxInt32, false)
+func (s *SSSessionMgr) SSServerListen(addr string, sendBuffMaxSize uint32) bool {
+	return GNet.Listen(addr, s, math.MaxInt32, sendBuffMaxSize, false)
 }
 
 var GSSSessionMgr *SSSessionMgr

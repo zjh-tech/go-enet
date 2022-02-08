@@ -18,12 +18,12 @@ func NewConnectionMgr() *ConnectionMgr {
 	}
 }
 
-func (c *ConnectionMgr) Create(net INet, netConn *net.TCPConn, sess ISession) IConnection {
+func (c *ConnectionMgr) Create(net INet, netConn *net.TCPConn, sess ISession, sendBuffMaxSize uint32) IConnection {
 	netConn.SetNoDelay(false)
 	c.connLocker.Lock()
 	defer c.connLocker.Unlock()
 	c.nextId++
-	conn := NewConnection(c.nextId, net, netConn, sess)
+	conn := NewConnection(c.nextId, net, netConn, sess, sendBuffMaxSize)
 	c.conns[conn.GetConnID()] = conn
 	ELog.Infof("[Net][ConnectionMgr] Add ConnID=%v Connection", conn.connId)
 	return conn
