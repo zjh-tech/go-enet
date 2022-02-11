@@ -40,8 +40,8 @@ const (
 	NetMaxConnectSize     = 65535
 	PackageDefaultMaxSize = 1024 * 64
 
-	SmallSendBuffMaxSize = 10000    //c-s
-	BigSendBuffMaxSize   = 10000000 //s-s
+	SmallSendBuffMaxSize = 1000    //c-s
+	BigSendBuffMaxSize   = 1000000 //s-s
 )
 
 const (
