@@ -66,7 +66,7 @@ func (c *Connection) writerGoroutine() {
 			GSendQps.Add(1)
 		case <-c.exitChan:
 			{
-				ELog.Errorf("[Net][Connection] ConnID=%v Write Goroutine Exit", c.connId)
+				ELog.Infof("[Net][Connection] ConnID=%v Write Goroutine Exit", c.connId)
 				return
 			}
 		}
@@ -92,7 +92,7 @@ func (c *Connection) readerGoroutine() {
 		headBytes := make([]byte, headerLen)
 		ELog.Debugf("StartReader ConnID=%v HeaderLen=%v", c.connId, headerLen)
 		if _, head_err := io.ReadFull(c.conn, headBytes); head_err != nil {
-			ELog.Errorf("[Net][Connection] ConnID=%v Read Goroutine Exit ReadFullError=%v", c.connId, head_err)
+			ELog.Infof("[Net][Connection] ConnID=%v Read Goroutine Exit ReadFullError=%v", c.connId, head_err)
 			return
 		}
 
