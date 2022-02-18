@@ -38,28 +38,25 @@ type RemoteSessionSpec struct {
 
 type SSSession struct {
 	Session
-	sessState              uint32
-	lastSendBeatHeartTime  int64
-	lastCheckBeatHeartTime int64
-	verifySpec             VerifySessionSpec
-	remoteSpec             RemoteSessionSpec
-	localToken             string
-	logicServer            ILogicServer
+	sessState   uint32
+	verifySpec  VerifySessionSpec
+	remoteSpec  RemoteSessionSpec
+	localToken  string
+	logicServer ILogicServer
 }
 
 func NewSSSession(isListenFlag bool) *SSSession {
-	session := &SSSession{
-		sessState:              SessCloseState,
-		lastSendBeatHeartTime:  getMillsecond(),
-		lastCheckBeatHeartTime: getMillsecond(),
+	sess := &SSSession{
+		sessState: SessCloseState,
 	}
-	session.Session.ISessionOnHandler = session
+	sess.Session.ISessionOnHandler = sess
+	sess.SetBeatHeartMaxTime(SSBeatHeartMaxTime)
 	if isListenFlag {
-		session.SetListenType()
+		sess.SetListenType()
 	} else {
-		session.SetConnectType()
+		sess.SetConnectType()
 	}
-	return session
+	return sess
 }
 
 //------------------------------------------------------------
@@ -126,7 +123,7 @@ func (s *SSSession) Update() {
 	}
 
 	now := getMillsecond()
-	if (s.lastCheckBeatHeartTime + SSBeatHeartMaxTime) < now {
+	if (s.lastCheckBeatHeartTime + s.beatHeartMaxTime) < now {
 		ELog.Errorf("[SSSession] Remote [ID=%v,Type=%v,Addr=%v] BeatHeart Exception", s.remoteSpec.ServerID, s.remoteSpec.ServerType, s.remoteSpec.Addr)
 		s.Terminate()
 		return

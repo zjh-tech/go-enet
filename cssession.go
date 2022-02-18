@@ -23,20 +23,17 @@ type ICSMsgHandler interface {
 
 type CSSession struct {
 	Session
-	handler                ICSMsgHandler
-	lastSendBeatHeartTime  int64
-	lastCheckBeatHeartTime int64
-	overloadModule         *OverLoadModule
+	handler        ICSMsgHandler
+	overloadModule *OverLoadModule
 }
 
 func NewCSSession(handler ICSMsgHandler, isListenFlag bool) *CSSession {
 	sess := &CSSession{
-		handler:                handler,
-		lastCheckBeatHeartTime: getMillsecond(),
-		lastSendBeatHeartTime:  getMillsecond(),
-		overloadModule:         nil,
+		handler:        handler,
+		overloadModule: nil,
 	}
 	sess.Session.ISessionOnHandler = sess
+	sess.SetBeatHeartMaxTime(C2SBeatHeartMaxTime)
 	if isListenFlag {
 		sess.SetListenType()
 	} else {
@@ -62,7 +59,7 @@ func (c *CSSession) Update() {
 	}
 
 	now := getMillsecond()
-	if (c.lastCheckBeatHeartTime + C2SBeatHeartMaxTime) < now {
+	if (c.lastCheckBeatHeartTime + c.beatHeartMaxTime) < now {
 		ELog.Errorf("CSSession %v  BeatHeart Exception", c.GetSessID())
 		c.handler.OnBeatHeartError(c)
 		c.Terminate()
@@ -136,13 +133,11 @@ func NewCSSessionMgr() *CSSessionMgr {
 
 func (c *CSSessionMgr) IsInConnectCache(sessionId uint64) bool {
 	_, ok := c.cacheMap.Load(sessionId)
-	//_, ok := c.cacheMap[sessionId]
 	return ok
 }
 
 func (c *CSSessionMgr) IsExistSessionOfSessID(sessionId uint64) bool {
 	_, ok := c.sessMap.Load(sessionId)
-	//_, ok := c.sessMap[sessionId]
 	return ok
 }
 

@@ -10,25 +10,27 @@ import (
 )
 
 type Connection struct {
-	connId       uint64
-	net          INet
-	conn         *net.TCPConn
-	sendBuffChan chan []byte
-	exitChan     chan struct{}
-	session      ISession
-	state        atomic.Uint32
+	connId          uint64
+	net             INet
+	conn            *net.TCPConn
+	sendBuffChan    chan []byte
+	sendBuffMaxSize uint32
+	exitChan        chan struct{}
+	session         ISession
+	state           atomic.Uint32
 }
 
 func NewConnection(connId uint64, net INet, conn *net.TCPConn, sess ISession, sendBuffMaxSize uint32) *Connection {
 	ELog.Infof("[Net][Connection] ConnID=%v Bind SessID=%v", connId, sess.GetSessID())
 	return &Connection{
-		connId:       connId,
-		net:          net,
-		conn:         conn,
-		session:      sess,
-		sendBuffChan: make(chan []byte, sendBuffMaxSize),
-		exitChan:     make(chan struct{}),
-		state:        *atomic.NewUint32(ConnEstablishState),
+		connId:          connId,
+		net:             net,
+		conn:            conn,
+		session:         sess,
+		sendBuffChan:    make(chan []byte, sendBuffMaxSize),
+		sendBuffMaxSize: sendBuffMaxSize,
+		exitChan:        make(chan struct{}),
+		state:           *atomic.NewUint32(ConnEstablishState),
 	}
 }
 

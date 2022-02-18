@@ -20,6 +20,10 @@ type Session struct {
 	localAddr                 string
 	remoteAddr                string
 	terminateFlag             bool
+
+	beatHeartMaxTime       int64
+	lastSendBeatHeartTime  int64
+	lastCheckBeatHeartTime int64
 }
 
 func (s *Session) SetSessionConcurrentFlag(flag bool, recvBuffMaxSize uint32) {
@@ -115,6 +119,13 @@ func (s *Session) SetSessionFactory(factory ISessionFactory) {
 
 func (s *Session) GetSessionFactory() ISessionFactory {
 	return s.factory
+}
+
+func (s *Session) SetBeatHeartMaxTime(millSecTime int64) {
+	s.beatHeartMaxTime = millSecTime
+	now := getMillsecond()
+	s.lastCheckBeatHeartTime = now
+	s.lastSendBeatHeartTime = now
 }
 
 func (s *Session) StartSessionConcurrentGoroutine() {

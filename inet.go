@@ -118,6 +118,8 @@ type ISession interface {
 	SetRemoteAddr(addr string)
 
 	GetRemoteAddr() string
+
+	SetBeatHeartMaxTime(millSecTime int64)
 }
 
 //ISessionFactory
