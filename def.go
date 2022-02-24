@@ -41,6 +41,7 @@ const (
 	PackageDefaultMaxSize = 1024 * 64
 
 	SmallSendBuffMaxSize = 1000   //c-s
+	SmallRecvBuffMaxSize = 1000   //c-s
 	BigSendBuffMaxSize   = 100000 //s-s
 	BigRecvBuffMaxSize   = 100000 //s-s
 )
